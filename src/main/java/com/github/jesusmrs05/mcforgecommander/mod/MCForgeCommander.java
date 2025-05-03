@@ -1,9 +1,9 @@
-package com.example.modid;
+package com.github.jesusmrs05.mcforgecommander.mod;
 
+import com.example.modid.Tags;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.network.play.client.CPacketChatMessage;
-import net.minecraft.util.text.TextComponentString;
 import net.minecraftforge.client.event.InputUpdateEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Mod;
@@ -18,7 +18,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 
 @Mod(modid = Tags.MOD_ID, name = Tags.MOD_NAME, version = Tags.VERSION)
-public class ExampleMod {
+public class MCForgeCommander {
 
 	public static final Logger LOGGER = LogManager.getLogger(Tags.MOD_NAME);
 	private static final int PORT = 6000;
