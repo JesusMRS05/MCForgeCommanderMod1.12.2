@@ -8,7 +8,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.Serializable;
 
-public enum Instruction implements Serializable, Runnable {
+public enum Action implements Serializable, Runnable {
 	TOGGLE_MOVE_FORWARD {
 		private boolean isMoving = false;
 		private final Object movementListener = new Object() {
