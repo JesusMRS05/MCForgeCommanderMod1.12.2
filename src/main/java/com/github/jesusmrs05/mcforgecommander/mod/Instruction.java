@@ -1,4 +1,4 @@
-package com.github.jesusmrs05.mcforgecommander.common;
+package com.github.jesusmrs05.mcforgecommander.mod;
 
 import net.minecraftforge.client.event.InputUpdateEvent;
 import net.minecraftforge.common.MinecraftForge;
