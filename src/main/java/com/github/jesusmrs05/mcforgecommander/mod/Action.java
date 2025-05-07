@@ -1,6 +1,7 @@
 package com.github.jesusmrs05.mcforgecommander.mod;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.network.play.client.CPacketChatMessage;
 import net.minecraftforge.client.event.InputUpdateEvent;
 import net.minecraftforge.common.MinecraftForge;
@@ -124,11 +125,17 @@ public enum Action implements Consumer<Object> {
 			try {
 				String message = (String) params;
 				Minecraft mc = Minecraft.getMinecraft();
-				try {
-					mc.getConnection().sendPacket(new CPacketChatMessage(message));
-					logger.info("Message sent to chat: " + message);
-				} catch (NullPointerException npe) {
-					logger.error("Error sending message to chat: Null pointer exception");
+				EntityPlayerSP player = mc.player;
+
+				if (player != null) {
+					try {
+						mc.getConnection().sendPacket(new CPacketChatMessage(message));
+						logger.info("Message sent");
+					} catch (NullPointerException npe) {
+						logger.error("The connection is null.");
+					}
+				} else {
+					logger.error("Player is null.");
 				}
 			} catch (ClassCastException cce) {
 				logger.error("The parameter to send the message is not a string.");
