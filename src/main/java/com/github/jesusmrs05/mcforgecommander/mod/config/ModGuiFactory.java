@@ -1,6 +1,7 @@
 package com.github.jesusmrs05.mcforgecommander.mod.config;
 
 import com.github.jesusmrs05.mcforgecommander.Tags;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
@@ -21,7 +22,8 @@ import java.util.regex.Pattern;
 public class ModGuiFactory implements IModGuiFactory {
 
     @Override
-    public void initialize(Minecraft minecraftInstance) {}
+    public void initialize(Minecraft minecraftInstance) {
+    }
 
     @Override
     public boolean hasConfigGui() {
@@ -45,7 +47,9 @@ public class ModGuiFactory implements IModGuiFactory {
 
         private static List<IConfigElement> getConfigElements() {
             List<IConfigElement> list = new ArrayList<>();
-            list.addAll(new ConfigElement(Config.config.getCategory(Configuration.CATEGORY_GENERAL)).getChildElements());
+            ConfigElement generalCategory = new ConfigElement(Config.config.getCategory(Configuration.CATEGORY_GENERAL));
+            generalCategory.getChildElements().removeIf(element -> "Key".equals(element.getName()));
+            list.addAll(generalCategory.getChildElements());
             list.add(new CustomConfigElement());
             return list;
         }
@@ -69,12 +73,12 @@ public class ModGuiFactory implements IModGuiFactory {
 
         @Override
         public String getName() {
-            return "Custom Button";
+            return "Key";
         }
 
         @Override
         public String getQualifiedName() {
-            return "Custom Button";
+            return "Key";
         }
 
         @Override
@@ -84,7 +88,7 @@ public class ModGuiFactory implements IModGuiFactory {
 
         @Override
         public String getComment() {
-            return "Click to copy to clipboard";
+            return "Click refresh (↻) to generate new key";
         }
 
         @Override
@@ -153,11 +157,11 @@ public class ModGuiFactory implements IModGuiFactory {
         }
 
         @Override
-        public void set(Object value) { }
+        public void set(Object value) {
+        }
 
         @Override
         public void set(Object[] aVal) {
-
         }
 
         @Override
@@ -181,7 +185,8 @@ public class ModGuiFactory implements IModGuiFactory {
         }
 
         @Override
-        public void setToDefault() { }
+        public void setToDefault() {
+        }
     }
 
     public static class CustomConfigEntry extends GuiConfigEntries.ButtonEntry {
@@ -189,7 +194,6 @@ public class ModGuiFactory implements IModGuiFactory {
         private static final int BUTTON_HEIGHT = 20;
         private static final int KEY_LENGTH = 16;
         private String btnText = "";
-        private String key = "";
         private int refreshX;
         private int refreshY;
         private int eyeX;
@@ -197,6 +201,16 @@ public class ModGuiFactory implements IModGuiFactory {
 
         public CustomConfigEntry(GuiConfig owningScreen, GuiConfigEntries owningEntryList, IConfigElement configElement) {
             super(owningScreen, owningEntryList, configElement);
+            if (Config.key.equals("")) {
+                btnText = "Click ↻ to generate a key";
+            } else {
+                String asterisks = "";
+                for (int i = 0; i < Config.key.length(); i++) {
+                    asterisks = asterisks + "*";
+                }
+                btnText = asterisks;
+            }
+            updateValueButtonText();
         }
 
         @Override
@@ -224,9 +238,10 @@ public class ModGuiFactory implements IModGuiFactory {
         @Override
         public void mouseClicked(int mouseX, int mouseY, int mouseEvent) {
             if (isMouseOver(refreshX, refreshY, BUTTON_WIDTH, BUTTON_HEIGHT, mouseX, mouseY)) {
-                key = KeyGenerator.generateKey(KEY_LENGTH);
+                Config.key = KeyGenerator.generateKey(KEY_LENGTH);
+                Config.save();
                 String asterisks = "";
-                for (int i = 0; i < key.length(); i++) {
+                for (int i = 0; i < Config.key.length(); i++) {
                     asterisks = asterisks + "*";
                 }
                 btnText = asterisks;
@@ -235,11 +250,13 @@ public class ModGuiFactory implements IModGuiFactory {
             }
 
             if (isMouseOver(eyeX, eyeY, BUTTON_WIDTH, BUTTON_HEIGHT, mouseX, mouseY)) {
-                if (btnText.matches("[\\*]{" + KEY_LENGTH + "}")) {
-                    btnText = key;
+                if (Config.key.equals("")) {
+                    btnText = "Click ↻ to generate a key";
+                } else if (btnText.matches("[\\*]{" + KEY_LENGTH + "}")) {
+                    btnText = Config.key;
                 } else {
                     String asterisks = "";
-                    for (int i = 0; i < key.length(); i++) {
+                    for (int i = 0; i < Config.key.length(); i++) {
                         asterisks = asterisks + "*";
                     }
                     btnText = asterisks;
@@ -254,13 +271,41 @@ public class ModGuiFactory implements IModGuiFactory {
             return mouseX >= x && mouseX <= x + width && mouseY >= y && mouseY <= y + height;
         }
 
-        @Override public void valueButtonPressed(int slotIndex) {}
-        @Override public boolean isDefault() { return false; }
-        @Override public void setToDefault() {}
-        @Override public boolean isChanged() { return false; }
-        @Override public void undoChanges() {}
-        @Override public boolean saveConfigElement() { return true; }
-        @Override public Object getCurrentValue() { return null; }
-        @Override public Object[] getCurrentValues() { return new Object[0]; }
+        @Override
+        public void valueButtonPressed(int slotIndex) {
+        }
+
+        @Override
+        public boolean isDefault() {
+            return false;
+        }
+
+        @Override
+        public void setToDefault() {
+        }
+
+        @Override
+        public boolean isChanged() {
+            return false;
+        }
+
+        @Override
+        public void undoChanges() {
+        }
+
+        @Override
+        public boolean saveConfigElement() {
+            return true;
+        }
+
+        @Override
+        public Object getCurrentValue() {
+            return null;
+        }
+
+        @Override
+        public Object[] getCurrentValues() {
+            return new Object[0];
+        }
     }
 }
