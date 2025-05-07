@@ -1,6 +1,6 @@
 package com.github.jesusmrs05.mcforgecommander.mod;
 
-import com.example.modid.Tags;
+import com.github.jesusmrs05.mcforgecommander.Tags;
 import com.github.jesusmrs05.mcforgecommander.common.Command;
 
 import org.apache.logging.log4j.LogManager;
