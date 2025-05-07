@@ -10,4 +10,12 @@ public class Command implements Serializable {
         this.instruction = instruction;
         this.params = params;
     }
+
+    public Instruction getInstruction() {
+        return instruction;
+    }
+
+    public Serializable getParams() {
+        return params;
+    }
 }

@@ -10,9 +10,10 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.Serializable;
 import java.util.function.Consumer;
 
-public enum Action implements Consumer<Object> {
+public enum Action implements Consumer<Serializable> {
 	TOGGLE_MOVE_FORWARD {
 		private boolean isMoving = false;
 		private final Object movementListener = new Object() {
@@ -25,7 +26,7 @@ public enum Action implements Consumer<Object> {
 		};
 
 		@Override
-		public void accept(Object params) {
+		public void accept(Serializable params) {
 			isMoving = !isMoving;
 			Logger logger = LogManager.getLogger("MCForgeCommander");
 
@@ -51,7 +52,7 @@ public enum Action implements Consumer<Object> {
 		};
 
 		@Override
-		public void accept(Object params) {
+		public void accept(Serializable params) {
 			isMoving = !isMoving;
 			Logger logger = LogManager.getLogger("MCForgeCommander");
 
@@ -77,7 +78,7 @@ public enum Action implements Consumer<Object> {
 		};
 
 		@Override
-		public void accept(Object params) {
+		public void accept(Serializable params) {
 			isMoving = !isMoving;
 			Logger logger = LogManager.getLogger("MCForgeCommander");
 
@@ -103,7 +104,7 @@ public enum Action implements Consumer<Object> {
 		};
 
 		@Override
-		public void accept(Object params) {
+		public void accept(Serializable params) {
 			isMoving = !isMoving;
 			Logger logger = LogManager.getLogger("MCForgeCommander");
 
@@ -119,7 +120,7 @@ public enum Action implements Consumer<Object> {
 
 	SEND_MESSAGE_TO_CHAT {
 		@Override
-		public void accept(Object params) {
+		public void accept(Serializable params) {
 			Logger logger = LogManager.getLogger("MCForgeCommander");
 
 			try {
