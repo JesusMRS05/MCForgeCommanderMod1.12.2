@@ -1,16 +1,22 @@
 package com.github.jesusmrs05.mcforgecommander.mod.config;
 
 import com.github.jesusmrs05.mcforgecommander.Tags;
-
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
+import net.minecraftforge.common.config.ConfigElement;
+import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.fml.client.IModGuiFactory;
+import net.minecraftforge.fml.client.config.ConfigGuiType;
 import net.minecraftforge.fml.client.config.GuiConfig;
+import net.minecraftforge.fml.client.config.GuiConfigEntries;
+import net.minecraftforge.fml.client.config.GuiEditArrayEntries;
 import net.minecraftforge.fml.client.config.IConfigElement;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 public class ModGuiFactory implements IModGuiFactory {
 
@@ -34,11 +40,215 @@ public class ModGuiFactory implements IModGuiFactory {
 
     public static class ModConfigGui extends GuiConfig {
         public ModConfigGui(GuiScreen parentScreen) {
-            super(parentScreen, getConfigElements(), Tags.MOD_ID, false, false, "Configuración de MCForgeCommander");
+            super(parentScreen, getConfigElements(), Tags.MOD_ID, false, false, "MCForgeCommander");
         }
 
         private static List<IConfigElement> getConfigElements() {
-            return new ArrayList<>();
+            List<IConfigElement> list = new ArrayList<>();
+            list.addAll(new ConfigElement(Config.config.getCategory(Configuration.CATEGORY_GENERAL)).getChildElements());
+            list.add(new CustomConfigElement());
+            return list;
         }
+    }
+
+    public static class CustomConfigElement implements IConfigElement {
+        @Override
+        public boolean isProperty() {
+            return false;
+        }
+
+        @Override
+        public Class<? extends GuiConfigEntries.IConfigEntry> getConfigEntryClass() {
+            return CustomConfigEntry.class;  // Usamos nuestra entrada personalizada
+        }
+
+        @Override
+        public Class<? extends GuiEditArrayEntries.IArrayEntry> getArrayEntryClass() {
+            return null;
+        }
+
+        @Override
+        public String getName() {
+            return "Custom Button";
+        }
+
+        @Override
+        public String getQualifiedName() {
+            return "Custom Button";
+        }
+
+        @Override
+        public String getLanguageKey() {
+            return "";
+        }
+
+        @Override
+        public String getComment() {
+            return "Presiona el botón para realizar una acción.";
+        }
+
+        @Override
+        public List<IConfigElement> getChildElements() {
+            return null;
+        }
+
+        @Override
+        public ConfigGuiType getType() {
+            return ConfigGuiType.STRING;
+        }
+
+        @Override
+        public boolean isList() {
+            return false;
+        }
+
+        @Override
+        public boolean isListLengthFixed() {
+            return false;
+        }
+
+        @Override
+        public int getMaxListLength() {
+            return 0;
+        }
+
+        @Override
+        public boolean isDefault() {
+            return false;
+        }
+
+        @Override
+        public boolean showInGui() {
+            return true;
+        }
+
+        @Override
+        public boolean requiresWorldRestart() {
+            return false;
+        }
+
+        @Override
+        public boolean requiresMcRestart() {
+            return false;
+        }
+
+        @Override
+        public Object get() {
+            return null;
+        }
+
+        @Override
+        public Object[] getList() {
+            return new Object[0];
+        }
+
+        @Override
+        public Object getDefault() {
+            return null;
+        }
+
+        @Override
+        public Object[] getDefaults() {
+            return new Object[0];
+        }
+
+        @Override
+        public void set(Object value) { }
+
+        @Override
+        public void set(Object[] aVal) {
+
+        }
+
+        @Override
+        public String[] getValidValues() {
+            return new String[0];
+        }
+
+        @Override
+        public Object getMinValue() {
+            return null;
+        }
+
+        @Override
+        public Object getMaxValue() {
+            return null;
+        }
+
+        @Override
+        public Pattern getValidationPattern() {
+            return null;
+        }
+
+        @Override
+        public void setToDefault() { }
+    }
+
+    public static class CustomConfigEntry extends GuiConfigEntries.ButtonEntry {
+        private static final int BUTTON_WIDTH = 20;
+        private static final int BUTTON_HEIGHT = 20;
+        private String btnText = "";
+        private int refreshX;
+        private int refreshY;
+        private int eyeX;
+        private int eyeY;
+
+        public CustomConfigEntry(GuiConfig owningScreen, GuiConfigEntries owningEntryList, IConfigElement configElement) {
+            super(owningScreen, owningEntryList, configElement);
+        }
+
+        @Override
+        public void updateValueButtonText() {
+            this.btnValue.displayString = btnText;
+            this.btnValue.enabled = false;
+        }
+
+        @Override
+        public void drawEntry(int slotIndex, int x, int y, int listWidth, int slotHeight, int mouseX, int mouseY, boolean isSelected, float partialTicks) {
+            super.drawEntry(slotIndex, x, y, listWidth, slotHeight, mouseX, mouseY, isSelected, partialTicks);
+
+            // Posicionamiento de botones
+            refreshX = x + listWidth - BUTTON_WIDTH * 2 - 4;
+            refreshY = y + (slotHeight - BUTTON_HEIGHT) / 2;
+            eyeX = x + listWidth - BUTTON_WIDTH - 2;
+            eyeY = y + (slotHeight - BUTTON_HEIGHT) / 2;
+
+            // Dibujar botón de refrescar
+            GuiButton refreshBtn = new GuiButton(0, refreshX, refreshY, BUTTON_WIDTH, BUTTON_HEIGHT, "↻");
+            refreshBtn.drawButton(Minecraft.getMinecraft(), mouseX, mouseY, partialTicks);
+
+            // Dibujar botón de ojo
+            GuiButton eyeBtn = new GuiButton(1, eyeX, eyeY, BUTTON_WIDTH, BUTTON_HEIGHT, "👁");
+            eyeBtn.drawButton(Minecraft.getMinecraft(), mouseX, mouseY, partialTicks);
+        }
+
+        @Override
+        public void mouseClicked(int mouseX, int mouseY, int mouseEvent) {
+            if (isMouseOver(refreshX, refreshY, BUTTON_WIDTH, BUTTON_HEIGHT, mouseX, mouseY)) {
+                btnText = "HOLA";
+                updateValueButtonText();
+                owningScreen.initGui();
+            }
+
+            if (isMouseOver(eyeX, eyeY, BUTTON_WIDTH, BUTTON_HEIGHT, mouseX, mouseY)) {
+                // Acción de ojo
+                System.out.println("Botón de ojo presionado!");
+            }
+            super.mouseClicked(mouseX, mouseY, mouseEvent);
+        }
+
+        private boolean isMouseOver(int x, int y, int width, int height, int mouseX, int mouseY) {
+            return mouseX >= x && mouseX <= x + width && mouseY >= y && mouseY <= y + height;
+        }
+
+        // Implementaciones requeridas restantes (sin funcionalidad adicional)
+        @Override public void valueButtonPressed(int slotIndex) {}
+        @Override public boolean isDefault() { return false; }
+        @Override public void setToDefault() {}
+        @Override public boolean isChanged() { return false; }
+        @Override public void undoChanges() {}
+        @Override public boolean saveConfigElement() { return true; }
+        @Override public Object getCurrentValue() { return null; }
+        @Override public Object[] getCurrentValues() { return new Object[0]; }
     }
 }
