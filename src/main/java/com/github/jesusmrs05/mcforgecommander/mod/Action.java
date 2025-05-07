@@ -1,12 +1,17 @@
 package com.github.jesusmrs05.mcforgecommander.mod;
 
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.play.client.CPacketChatMessage;
 import net.minecraftforge.client.event.InputUpdateEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public enum Action implements Runnable {
+import java.util.function.Consumer;
+
+public enum Action implements Consumer<Object> {
 	TOGGLE_MOVE_FORWARD {
 		private boolean isMoving = false;
 		private final Object movementListener = new Object() {
@@ -19,16 +24,16 @@ public enum Action implements Runnable {
 		};
 
 		@Override
-		public void run() {
+		public void accept(Object params) {
 			isMoving = !isMoving;
 			Logger logger = LogManager.getLogger("MCForgeCommander");
 
 			if (isMoving) {
 				MinecraftForge.EVENT_BUS.register(movementListener);
-				logger.info("Movimiento hacia adelante ACTIVADO");
+				logger.info("Move forward ENABLED");
 			} else {
 				MinecraftForge.EVENT_BUS.unregister(movementListener);
-				logger.info("Movimiento hacia adelante DESACTIVADO");
+				logger.info("Move forward DISABLED");
 			}
 		}
 	},
@@ -45,16 +50,16 @@ public enum Action implements Runnable {
 		};
 
 		@Override
-		public void run() {
+		public void accept(Object params) {
 			isMoving = !isMoving;
 			Logger logger = LogManager.getLogger("MCForgeCommander");
 
 			if (isMoving) {
 				MinecraftForge.EVENT_BUS.register(movementListener);
-				logger.info("Movimiento hacia atrás ACTIVADO");
+				logger.info("Move backward ENABLED");
 			} else {
 				MinecraftForge.EVENT_BUS.unregister(movementListener);
-				logger.info("Movimiento hacia atrás DESACTIVADO");
+				logger.info("Move backward DISABLED");
 			}
 		}
 	},
@@ -71,16 +76,16 @@ public enum Action implements Runnable {
 		};
 
 		@Override
-		public void run() {
+		public void accept(Object params) {
 			isMoving = !isMoving;
 			Logger logger = LogManager.getLogger("MCForgeCommander");
 
 			if (isMoving) {
 				MinecraftForge.EVENT_BUS.register(movementListener);
-				logger.info("Movimiento a la izquierda ACTIVADO");
+				logger.info("Move left ENABLED");
 			} else {
 				MinecraftForge.EVENT_BUS.unregister(movementListener);
-				logger.info("Movimiento a la izquierda DESACTIVADO");
+				logger.info("Move left DISABLED");
 			}
 		}
 	},
@@ -97,16 +102,36 @@ public enum Action implements Runnable {
 		};
 
 		@Override
-		public void run() {
+		public void accept(Object params) {
 			isMoving = !isMoving;
 			Logger logger = LogManager.getLogger("MCForgeCommander");
 
 			if (isMoving) {
 				MinecraftForge.EVENT_BUS.register(movementListener);
-				logger.info("Movimiento a la derecha ACTIVADO");
+				logger.info("Move right ENABLED");
 			} else {
 				MinecraftForge.EVENT_BUS.unregister(movementListener);
-				logger.info("Movimiento a la derecha DESACTIVADO");
+				logger.info("Move right DISABLED");
+			}
+		}
+	},
+
+	SEND_MESSAGE_TO_CHAT {
+		@Override
+		public void accept(Object params) {
+			Logger logger = LogManager.getLogger("MCForgeCommander");
+
+			try {
+				String message = (String) params;
+				Minecraft mc = Minecraft.getMinecraft();
+				try {
+					mc.getConnection().sendPacket(new CPacketChatMessage(message));
+					logger.info("Message sent to chat: " + message);
+				} catch (NullPointerException npe) {
+					logger.error("Error sending message to chat: Null pointer exception");
+				}
+			} catch (ClassCastException cce) {
+				logger.error("The parameter to send the message is not a string.");
 			}
 		}
 	};

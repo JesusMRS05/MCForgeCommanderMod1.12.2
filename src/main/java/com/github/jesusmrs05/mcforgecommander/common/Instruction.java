@@ -6,5 +6,16 @@ public enum Instruction implements Serializable {
     TOGGLE_MOVE_FORWARD,
     TOGGLE_MOVE_BACKWARD,
     TOGGLE_MOVE_LEFT,
-    TOGGLE_MOVE_RIGHT;
+    TOGGLE_MOVE_RIGHT,
+    SEND_MESSAGE_TO_CHAT;
+
+    private Object params;
+
+    public void setParams(Object params) {
+        this.params = params;
+    }
+
+    public Object getParams() {
+        return params;
+    }
 }
