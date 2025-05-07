@@ -8,7 +8,6 @@ import org.apache.logging.log4j.Logger;
 
 @Mod(modid = Tags.MOD_ID, name = Tags.MOD_NAME, version = Tags.VERSION)
 public class MCForgeCommander {
-
 	public static final Logger LOGGER = LogManager.getLogger(Tags.MOD_NAME);
 
 	/**
@@ -18,7 +17,6 @@ public class MCForgeCommander {
 	 */
 	@Mod.EventHandler
 	public void preInit(FMLPreInitializationEvent event) {
-		LOGGER.info("Hello From {}!", Tags.MOD_NAME);
 	}
 
 }
