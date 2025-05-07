@@ -59,7 +59,7 @@ public class ModGuiFactory implements IModGuiFactory {
 
         @Override
         public Class<? extends GuiConfigEntries.IConfigEntry> getConfigEntryClass() {
-            return CustomConfigEntry.class;  // Usamos nuestra entrada personalizada
+            return CustomConfigEntry.class;
         }
 
         @Override
@@ -84,7 +84,7 @@ public class ModGuiFactory implements IModGuiFactory {
 
         @Override
         public String getComment() {
-            return "Presiona el botón para realizar una acción.";
+            return "Click to copy to clipboard";
         }
 
         @Override
@@ -187,7 +187,9 @@ public class ModGuiFactory implements IModGuiFactory {
     public static class CustomConfigEntry extends GuiConfigEntries.ButtonEntry {
         private static final int BUTTON_WIDTH = 20;
         private static final int BUTTON_HEIGHT = 20;
+        private static final int KEY_LENGTH = 16;
         private String btnText = "";
+        private String key = "";
         private int refreshX;
         private int refreshY;
         private int eyeX;
@@ -207,32 +209,43 @@ public class ModGuiFactory implements IModGuiFactory {
         public void drawEntry(int slotIndex, int x, int y, int listWidth, int slotHeight, int mouseX, int mouseY, boolean isSelected, float partialTicks) {
             super.drawEntry(slotIndex, x, y, listWidth, slotHeight, mouseX, mouseY, isSelected, partialTicks);
 
-            // Posicionamiento de botones
             refreshX = x + listWidth - BUTTON_WIDTH * 2 - 4;
             refreshY = y + (slotHeight - BUTTON_HEIGHT) / 2;
             eyeX = x + listWidth - BUTTON_WIDTH - 2;
             eyeY = y + (slotHeight - BUTTON_HEIGHT) / 2;
 
-            // Dibujar botón de refrescar
             GuiButton refreshBtn = new GuiButton(0, refreshX, refreshY, BUTTON_WIDTH, BUTTON_HEIGHT, "↻");
             refreshBtn.drawButton(Minecraft.getMinecraft(), mouseX, mouseY, partialTicks);
 
-            // Dibujar botón de ojo
-            GuiButton eyeBtn = new GuiButton(1, eyeX, eyeY, BUTTON_WIDTH, BUTTON_HEIGHT, "👁");
+            GuiButton eyeBtn = new GuiButton(1, eyeX, eyeY, BUTTON_WIDTH, BUTTON_HEIGHT, "◉");
             eyeBtn.drawButton(Minecraft.getMinecraft(), mouseX, mouseY, partialTicks);
         }
 
         @Override
         public void mouseClicked(int mouseX, int mouseY, int mouseEvent) {
             if (isMouseOver(refreshX, refreshY, BUTTON_WIDTH, BUTTON_HEIGHT, mouseX, mouseY)) {
-                btnText = "HOLA";
+                key = KeyGenerator.generateKey(KEY_LENGTH);
+                String asterisks = "";
+                for (int i = 0; i < key.length(); i++) {
+                    asterisks = asterisks + "*";
+                }
+                btnText = asterisks;
                 updateValueButtonText();
                 owningScreen.initGui();
             }
 
             if (isMouseOver(eyeX, eyeY, BUTTON_WIDTH, BUTTON_HEIGHT, mouseX, mouseY)) {
-                // Acción de ojo
-                System.out.println("Botón de ojo presionado!");
+                if (btnText.matches("[\\*]{" + KEY_LENGTH + "}")) {
+                    btnText = key;
+                } else {
+                    String asterisks = "";
+                    for (int i = 0; i < key.length(); i++) {
+                        asterisks = asterisks + "*";
+                    }
+                    btnText = asterisks;
+                }
+                updateValueButtonText();
+                owningScreen.initGui();
             }
             super.mouseClicked(mouseX, mouseY, mouseEvent);
         }
@@ -241,7 +254,6 @@ public class ModGuiFactory implements IModGuiFactory {
             return mouseX >= x && mouseX <= x + width && mouseY >= y && mouseY <= y + height;
         }
 
-        // Implementaciones requeridas restantes (sin funcionalidad adicional)
         @Override public void valueButtonPressed(int slotIndex) {}
         @Override public boolean isDefault() { return false; }
         @Override public void setToDefault() {}
