@@ -1,7 +1,7 @@
 package com.github.jesusmrs05.mcforgecommander.mod;
 
 import com.example.modid.Tags;
-import com.github.jesusmrs05.mcforgecommander.common.Instruction;
+import com.github.jesusmrs05.mcforgecommander.common.Command;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -38,15 +38,15 @@ public class Server {
         }
     }
 
-    public Instruction getInstruction() {
-        Instruction instruction;
+    public Command getCommand() {
+        Command command;
         try {
-            instruction = (Instruction) input.readObject();
+            command = (Command) input.readObject();
         } catch (ClassNotFoundException | IOException e) {
-            instruction = null;
+            command = null;
             LOGGER.error("Error getting instruction: {}", e.getMessage());
         }
-        return instruction;
+        return command;
     }
 
     public void close() {
