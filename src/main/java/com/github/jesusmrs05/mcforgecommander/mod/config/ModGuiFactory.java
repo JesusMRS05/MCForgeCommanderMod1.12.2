@@ -5,6 +5,7 @@ import com.github.jesusmrs05.mcforgecommander.Tags;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
+import net.minecraftforge.common.config.ConfigCategory;
 import net.minecraftforge.common.config.ConfigElement;
 import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.fml.client.IModGuiFactory;
@@ -49,16 +50,19 @@ public class ModGuiFactory implements IModGuiFactory {
         private static List<IConfigElement> getConfigElements() {
             List<IConfigElement> list = new ArrayList<>();
             ConfigElement generalCategory = new ConfigElement(Config.config.getCategory(Configuration.CATEGORY_GENERAL));
-            for(IConfigElement element : generalCategory.getChildElements()) {
-                Logger.getLogger("MCForgeCommander").info(element.getName());
-            }
             list.addAll(generalCategory.getChildElements());
-            list.add(new CustomConfigElement());
+            list.add(new KeyConfigElement());
             return list;
+        }
+
+        @Override
+        public void onGuiClosed() {
+            Config.port = getConfigElements().get(1).get().toString();
+            Config.save();
         }
     }
 
-    public static class CustomConfigElement implements IConfigElement {
+    public static class KeyConfigElement implements IConfigElement {
         @Override
         public boolean isProperty() {
             return false;
@@ -66,7 +70,7 @@ public class ModGuiFactory implements IModGuiFactory {
 
         @Override
         public Class<? extends GuiConfigEntries.IConfigEntry> getConfigEntryClass() {
-            return CustomConfigEntry.class;
+            return KeyConfigEntry.class;
         }
 
         @Override
@@ -192,7 +196,7 @@ public class ModGuiFactory implements IModGuiFactory {
         }
     }
 
-    public static class CustomConfigEntry extends GuiConfigEntries.ButtonEntry {
+    public static class KeyConfigEntry extends GuiConfigEntries.ButtonEntry {
         private static final int BUTTON_WIDTH = 20;
         private static final int BUTTON_HEIGHT = 20;
         private static final int KEY_LENGTH = 16;
@@ -202,17 +206,16 @@ public class ModGuiFactory implements IModGuiFactory {
         private int eyeX;
         private int eyeY;
 
-        public CustomConfigEntry(GuiConfig owningScreen, GuiConfigEntries owningEntryList, IConfigElement configElement) {
+        public KeyConfigEntry(GuiConfig owningScreen, GuiConfigEntries owningEntryList, IConfigElement configElement) {
             super(owningScreen, owningEntryList, configElement);
             if (Config.key.equals("")) {
-                btnText = "Click ↻ to generate a key";
-            } else {
-                String asterisks = "";
-                for (int i = 0; i < Config.key.length(); i++) {
-                    asterisks = asterisks + "*";
-                }
-                btnText = asterisks;
+                Config.key = KeyGenerator.generateKey(KEY_LENGTH);
             }
+            String asterisks = "";
+            for (int i = 0; i < Config.key.length(); i++) {
+                asterisks = asterisks + "*";
+            }
+            btnText = asterisks;
             updateValueButtonText();
         }
 
@@ -242,7 +245,6 @@ public class ModGuiFactory implements IModGuiFactory {
         public void mouseClicked(int mouseX, int mouseY, int mouseEvent) {
             if (isMouseOver(refreshX, refreshY, BUTTON_WIDTH, BUTTON_HEIGHT, mouseX, mouseY)) {
                 Config.key = KeyGenerator.generateKey(KEY_LENGTH);
-                Config.save();
                 String asterisks = "";
                 for (int i = 0; i < Config.key.length(); i++) {
                     asterisks = asterisks + "*";
