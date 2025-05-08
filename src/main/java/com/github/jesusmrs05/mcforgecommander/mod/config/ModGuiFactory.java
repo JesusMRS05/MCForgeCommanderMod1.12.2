@@ -17,6 +17,7 @@ import net.minecraftforge.fml.client.config.IConfigElement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
 public class ModGuiFactory implements IModGuiFactory {
@@ -48,7 +49,9 @@ public class ModGuiFactory implements IModGuiFactory {
         private static List<IConfigElement> getConfigElements() {
             List<IConfigElement> list = new ArrayList<>();
             ConfigElement generalCategory = new ConfigElement(Config.config.getCategory(Configuration.CATEGORY_GENERAL));
-            generalCategory.getChildElements().removeIf(element -> "Key".equals(element.getName()));
+            for(IConfigElement element : generalCategory.getChildElements()) {
+                Logger.getLogger("MCForgeCommander").info(element.getName());
+            }
             list.addAll(generalCategory.getChildElements());
             list.add(new CustomConfigElement());
             return list;
@@ -295,7 +298,7 @@ public class ModGuiFactory implements IModGuiFactory {
 
         @Override
         public boolean saveConfigElement() {
-            return true;
+            return false;
         }
 
         @Override
