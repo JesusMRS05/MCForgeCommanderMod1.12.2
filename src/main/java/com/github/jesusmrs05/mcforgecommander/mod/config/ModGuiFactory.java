@@ -1,6 +1,7 @@
 package com.github.jesusmrs05.mcforgecommander.mod.config;
 
 import com.github.jesusmrs05.mcforgecommander.Tags;
+import com.github.jesusmrs05.mcforgecommander.server.Server;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiButton;
@@ -58,7 +59,16 @@ public class ModGuiFactory implements IModGuiFactory {
         @Override
         public void onGuiClosed() {
             Config.port = getConfigElements().get(1).get().toString();
+            Config.enableServer = Boolean.parseBoolean(getConfigElements().get(0).get().toString());
             Config.save();
+            if (Config.enableServer) {
+                Server.getInstance().startServer(Integer.parseInt(Config.port));
+            } else {
+                try {
+                    Server.getInstance().close();
+                } catch (NullPointerException npe) {
+                }
+            }
         }
     }
 
