@@ -41,7 +41,7 @@ public class Server {
             @Override
             public void run() {
                 try {
-                    serverSocket = new ServerSocket(port);
+                    serverSocket = new ServerSocket();
                     serverSocket.setSoTimeout(TIME_OUT);
                     serverSocket.setReuseAddress(true);
                     serverSocket.bind(new InetSocketAddress(port));
@@ -55,7 +55,7 @@ public class Server {
                     LOGGER.error("Error starting the server: {}", e.getMessage());
                 }
             }
-        });
+        }).start();
     }
 
     protected Command getCommand() {
