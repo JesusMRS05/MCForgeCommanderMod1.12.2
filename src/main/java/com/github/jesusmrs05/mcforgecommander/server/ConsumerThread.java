@@ -7,6 +7,7 @@ import com.github.jesusmrs05.mcforgecommander.mod.Action;
 import java.io.Serializable;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.logging.Logger;
 
 public class ConsumerThread extends Thread {
     private BlockingQueue<Command> movementCommands = new LinkedBlockingQueue<>();
@@ -23,6 +24,8 @@ public class ConsumerThread extends Thread {
                     Action action = Action.valueOf(instruction.name());
                     action.accept(params);
                 }
+            } catch (NullPointerException npe) {
+                Logger.getLogger("MCForgeCommander").info("ConsumerThreadMovement NullPointerException");
             } catch (InterruptedException ie) {
                 Thread.currentThread().interrupt();
             }
@@ -40,6 +43,8 @@ public class ConsumerThread extends Thread {
                     Action action = Action.valueOf(instruction.name());
                     action.accept(params);
                 }
+            } catch (NullPointerException npe) {
+                Logger.getLogger("MCForgeCommander").info("ConsumerThreadChat NullPointerException");
             } catch (InterruptedException ie) {
                 Thread.currentThread().interrupt();
             }
@@ -56,15 +61,17 @@ public class ConsumerThread extends Thread {
         try {
             while (!isInterrupted()) {
                 Command command = server.get();
-                if (command.getInstruction().name().matches(Instruction.TOGGLE_MOVE_FORWARD.name()+"|"+
-                        Instruction.TOGGLE_MOVE_BACKWARD.name()+"|"+
-                        Instruction.TOGGLE_MOVE_LEFT.name()+"|"+
-                        Instruction.TOGGLE_MOVE_RIGHT.name())){
+                if (command.getInstruction().name().matches(Instruction.TOGGLE_MOVE_FORWARD.name() + "|" +
+                        Instruction.TOGGLE_MOVE_BACKWARD.name() + "|" +
+                        Instruction.TOGGLE_MOVE_LEFT.name() + "|" +
+                        Instruction.TOGGLE_MOVE_RIGHT.name())) {
                     addMovement(command);
-                } else if (command.getInstruction().name().matches(Instruction.SEND_MESSAGE_TO_CHAT.name())){
+                } else if (command.getInstruction().name().matches(Instruction.SEND_MESSAGE_TO_CHAT.name())) {
                     addChat(command);
                 }
             }
+        } catch (NullPointerException npe) {
+            Logger.getLogger("MCForgeCommander").info("ConsumerThread NullPointerException");
         } catch (InterruptedException ie) {
             Thread.currentThread().interrupt();
             movementThread.interrupt();

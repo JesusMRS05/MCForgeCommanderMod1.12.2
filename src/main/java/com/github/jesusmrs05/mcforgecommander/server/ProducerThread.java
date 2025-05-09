@@ -2,6 +2,8 @@ package com.github.jesusmrs05.mcforgecommander.server;
 
 import com.github.jesusmrs05.mcforgecommander.common.Command;
 
+import java.util.logging.Logger;
+
 public class ProducerThread extends Thread {
     @Override
     public void run() {
@@ -13,6 +15,8 @@ public class ProducerThread extends Thread {
             }
         } catch (InterruptedException ie){
             Thread.currentThread().interrupt();
+        } catch (NullPointerException npe) {
+            Logger.getLogger("MCForgeCommander").info("ProducerThread NullPointerException");
         }
     }
 }

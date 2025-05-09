@@ -8,6 +8,9 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -16,14 +19,19 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 public class Server {
     private static final Logger LOGGER = LogManager.getLogger(Tags.MOD_NAME);
+    private static final int MAX_QUEUE_SIZE = 120;
     private static Server server;
     private ServerSocket serverSocket;
     private Socket clientSocket;
     private ObjectInputStream input;
-    private boolean occupied;
+    private ObjectOutputStream output;
     private BlockingQueue<Command> commands = new LinkedBlockingQueue<>();
+    private BlockingQueue<byte[]> imageQueue = new LinkedBlockingQueue<>();
+    private BlockingQueue<FrameData> frameDataQueue = new LinkedBlockingQueue<>();
     private ProducerThread producer;
     private ConsumerThread consumer;
+    private StreamerThread streamer;
+    private ConverterThread converter;
 
     public static synchronized Server getInstance() {
         if (Server.server == null) {
@@ -45,14 +53,26 @@ public class Server {
                     serverSocket.setSoTimeout(TIME_OUT);
                     serverSocket.setReuseAddress(true);
                     serverSocket.bind(new InetSocketAddress(port));
+                    LOGGER.info("Waiting for client...");
                     clientSocket = serverSocket.accept();
+                    LOGGER.info("Client connected");
+                    output = new ObjectOutputStream(clientSocket.getOutputStream());
                     input = new ObjectInputStream(clientSocket.getInputStream());
                     producer = new ProducerThread();
                     consumer = new ConsumerThread();
-                    producer.start();
-                    consumer.start();
+                    converter = new ConverterThread();
+                    streamer = new StreamerThread();
+                    //producer.start();
+                    //consumer.start();
+                    converter.start();
+                    streamer.start();
                 } catch (IOException e) {
                     LOGGER.error("Error starting the server: {}", e.getMessage());
+                    StringWriter sw = new StringWriter();
+                    PrintWriter pw = new PrintWriter(sw);
+                    e.printStackTrace(pw);
+                    String stackTrace = sw.toString();
+                    LOGGER.error(stackTrace);
                 }
             }
         }).start();
@@ -73,6 +93,9 @@ public class Server {
         try {
             producer.interrupt();
             consumer.interrupt();
+            converter.interrupt();
+            streamer.interrupt();
+            output.close();
             input.close();
             clientSocket.close();
             serverSocket.close();
@@ -87,6 +110,42 @@ public class Server {
     }
 
     protected Command get() throws InterruptedException {
-        return commands.take();
+        Command command = commands.take();
+        if(commands.size() > MAX_QUEUE_SIZE){
+            commands.clear();
+        }
+        return command;
+    }
+
+    public ObjectOutputStream getOutput() {
+        return output;
+    }
+
+    public void enqueueImage(byte[] imageBytes) throws InterruptedException {
+        imageQueue.put(imageBytes);
+    }
+
+    public byte[] takeImage() throws InterruptedException {
+        byte[] bytes = imageQueue.take();
+        if(imageQueue.size() > MAX_QUEUE_SIZE){
+            imageQueue.clear();
+        }
+        return bytes;
+    }
+
+    public Socket getClientSocket(){
+        return clientSocket;
+    }
+
+    public void enqueueFrameData(FrameData frameData) throws InterruptedException {
+        frameDataQueue.put(frameData);
+    }
+
+    public FrameData takeFrameData() throws InterruptedException {
+        FrameData frameData = frameDataQueue.take();
+        if(frameDataQueue.size() > MAX_QUEUE_SIZE){
+            frameDataQueue.clear();
+        }
+        return frameData;
     }
 }
