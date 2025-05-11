@@ -62,8 +62,8 @@ public class Server {
                     consumer = new ConsumerThread();
                     converter = new ConverterThread();
                     streamer = new StreamerThread();
-                    //producer.start();
-                    //consumer.start();
+                    producer.start();
+                    consumer.start();
                     converter.start();
                     streamer.start();
                 } catch (IOException e) {
