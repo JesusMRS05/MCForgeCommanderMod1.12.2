@@ -217,5 +217,12 @@ public enum Action implements Consumer<Serializable> {
                 }
             }
         }
+    },
+    PRESS_CHAT_KEY {
+        @Override
+        public void accept(Serializable params) {
+            KeyBinding.setKeyBindState(Minecraft.getMinecraft().gameSettings.keyBindChat.getKeyCode(), true);
+            KeyBinding.setKeyBindState(Minecraft.getMinecraft().gameSettings.keyBindChat.getKeyCode(), false);
+        }
     };
 }

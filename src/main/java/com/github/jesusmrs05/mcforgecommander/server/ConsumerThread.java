@@ -67,7 +67,8 @@ public class ConsumerThread extends Thread {
                         Instruction.TOGGLE_MOVE_RIGHT.name() + "|" +
                         Instruction.SCREEN_TOUCH.name())) {
                     addMovement(command);
-                } else if (command.getInstruction().name().matches(Instruction.SEND_MESSAGE_TO_CHAT.name())) {
+                } else if (command.getInstruction().name().matches(Instruction.SEND_MESSAGE_TO_CHAT.name() + "|" +
+                        Instruction.PRESS_CHAT_KEY.name())) {
                     addChat(command);
                 }
             }

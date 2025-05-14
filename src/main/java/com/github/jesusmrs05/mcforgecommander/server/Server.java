@@ -2,6 +2,7 @@ package com.github.jesusmrs05.mcforgecommander.server;
 
 import com.github.jesusmrs05.mcforgecommander.Tags;
 import com.github.jesusmrs05.mcforgecommander.common.Command;
+import com.github.jesusmrs05.mcforgecommander.mod.config.Config;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -58,6 +59,10 @@ public class Server {
                     LOGGER.info("Client connected");
                     output = new ObjectOutputStream(clientSocket.getOutputStream());
                     input = new ObjectInputStream(clientSocket.getInputStream());
+                    String password = input.readUTF();
+                    /*if(!password.equals(Config.key)){
+
+                    }*/
                     producer = new ProducerThread();
                     consumer = new ConsumerThread();
                     converter = new ConverterThread();
