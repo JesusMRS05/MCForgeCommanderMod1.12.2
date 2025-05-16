@@ -73,7 +73,9 @@ public class Server {
                     while(!password.equals(Config.key)){
                         close(Config.enableServer);
                         output.writeUTF("Incorrect Password");
+                        LOGGER.info("Waiting for client...");
                         clientSocket = serverSocket.accept();
+                        LOGGER.info("Client connected");
                         output = new ObjectOutputStream(clientSocket.getOutputStream());
                         input = new ObjectInputStream(clientSocket.getInputStream());
                         password = input.readUTF();

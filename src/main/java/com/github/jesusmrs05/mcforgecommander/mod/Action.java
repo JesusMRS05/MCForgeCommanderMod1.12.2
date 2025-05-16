@@ -13,6 +13,8 @@ import net.minecraft.util.math.RayTraceResult;
 import net.minecraftforge.client.event.InputUpdateEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraft.client.gui.GuiChat;
+import net.minecraft.client.gui.inventory.GuiInventory;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -216,8 +218,44 @@ public enum Action implements Consumer<Serializable> {
     PRESS_CHAT_KEY {
         @Override
         public void accept(Serializable params) {
-            KeyBinding.setKeyBindState(Minecraft.getMinecraft().gameSettings.keyBindChat.getKeyCode(), true);
-            KeyBinding.setKeyBindState(Minecraft.getMinecraft().gameSettings.keyBindChat.getKeyCode(), false);
+            if (params instanceof Boolean) {
+                boolean open = (Boolean) params;
+                if (open) {
+                    Minecraft.getMinecraft().displayGuiScreen(new GuiChat());
+                } else {
+                    Minecraft.getMinecraft().displayGuiScreen(null); // Cierra cualquier GUI
+                }
+            }
+        }
+    },
+
+    PRESS_INVENTORY_KEY {
+        @Override
+        public void accept(Serializable params) {
+            if (params instanceof Boolean) {
+                boolean open = (Boolean) params;
+                if (open) {
+                    Minecraft.getMinecraft().displayGuiScreen(new GuiInventory(Minecraft.getMinecraft().player));
+                } else {
+                    Minecraft.getMinecraft().displayGuiScreen(null);
+                }
+            }
+        }
+    },
+    PRESS_MENU_KEY {
+        @Override
+        public void accept(Serializable params) {
+            Minecraft.getMinecraft().displayInGameMenu();
+        }
+    },
+    //Goes from 0 to 8
+    PRESS_CERTAIN_HOTBAR_KEY {
+        @Override
+        public void accept(Serializable params) {
+            if (params instanceof Integer) {
+                int hotbarSlot = (Integer) params;
+                Minecraft.getMinecraft().player.inventory.currentItem = hotbarSlot;
+            }
         }
     };
 }

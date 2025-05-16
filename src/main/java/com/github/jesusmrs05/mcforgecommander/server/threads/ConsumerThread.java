@@ -69,7 +69,10 @@ public class ConsumerThread extends Thread {
                         Instruction.SCREEN_TOUCH.name())) {
                     addMovement(command);
                 } else if (command.getInstruction().name().matches(Instruction.SEND_MESSAGE_TO_CHAT.name() + "|" +
-                        Instruction.PRESS_CHAT_KEY.name())) {
+                        Instruction.PRESS_CHAT_KEY.name() + "|" +
+                        Instruction.PRESS_INVENTORY_KEY.name() + "|" +
+                        Instruction.PRESS_MENU_KEY.name() + "|" +
+                        Instruction.PRESS_CERTAIN_HOTBAR_KEY.name())) {
                     addChat(command);
                 }
             }
