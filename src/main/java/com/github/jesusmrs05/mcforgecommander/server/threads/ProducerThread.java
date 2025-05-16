@@ -1,7 +1,10 @@
-package com.github.jesusmrs05.mcforgecommander.server;
+package com.github.jesusmrs05.mcforgecommander.server.threads;
 
 import com.github.jesusmrs05.mcforgecommander.common.Command;
+import com.github.jesusmrs05.mcforgecommander.mod.config.Config;
+import com.github.jesusmrs05.mcforgecommander.server.Server;
 
+import java.io.IOException;
 import java.util.logging.Logger;
 
 public class ProducerThread extends Thread {
@@ -15,6 +18,8 @@ public class ProducerThread extends Thread {
             }
         } catch (InterruptedException ie){
             Thread.currentThread().interrupt();
+        } catch (IOException ioe) {
+            server.close(Config.enableServer);
         } catch (NullPointerException npe) {
             Logger.getLogger("MCForgeCommander").info("ProducerThread NullPointerException");
         }

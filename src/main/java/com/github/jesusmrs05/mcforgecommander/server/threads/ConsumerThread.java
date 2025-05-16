@@ -1,8 +1,9 @@
-package com.github.jesusmrs05.mcforgecommander.server;
+package com.github.jesusmrs05.mcforgecommander.server.threads;
 
 import com.github.jesusmrs05.mcforgecommander.common.Command;
 import com.github.jesusmrs05.mcforgecommander.common.Instruction;
 import com.github.jesusmrs05.mcforgecommander.mod.Action;
+import com.github.jesusmrs05.mcforgecommander.server.Server;
 
 import java.io.Serializable;
 import java.util.concurrent.BlockingQueue;

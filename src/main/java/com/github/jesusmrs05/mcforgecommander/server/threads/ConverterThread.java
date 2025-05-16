@@ -1,4 +1,7 @@
-package com.github.jesusmrs05.mcforgecommander.server;
+package com.github.jesusmrs05.mcforgecommander.server.threads;
+
+import com.github.jesusmrs05.mcforgecommander.server.FrameData;
+import com.github.jesusmrs05.mcforgecommander.server.Server;
 
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;

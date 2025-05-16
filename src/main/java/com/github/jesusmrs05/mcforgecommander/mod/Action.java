@@ -187,10 +187,7 @@ public enum Action implements Consumer<Serializable> {
                 int guiX = scaledX * scaled.getScaledWidth() / screenWidth;
                 int guiY = rawY * scaled.getScaledHeight() / screenHeight;
 
-                java.util.logging.Logger.getLogger("MCForgeCommander").info("¿Será click?");
                 if (capture.isClick()) {
-                    java.util.logging.Logger.getLogger("MCForgeCommander").info("¡Es click!");
-
                     mc.addScheduledTask(() -> {
                         try {
                             Method clickMethod = GuiScreen.class.getDeclaredMethod("mouseClicked", int.class, int.class, int.class);
@@ -200,8 +197,6 @@ public enum Action implements Consumer<Serializable> {
                             Method releaseMethod = GuiScreen.class.getDeclaredMethod("mouseReleased", int.class, int.class, int.class);
                             releaseMethod.setAccessible(true);
                             releaseMethod.invoke(mc.currentScreen, guiX, guiY, 0);
-
-                            java.util.logging.Logger.getLogger("MCForgeCommander").info("¡Click ejecutado!");
                         } catch (Exception e) {
                             LogManager.getLogger("MCForgeCommander").error("Error al simular clic en GUI", e);
                         }

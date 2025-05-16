@@ -3,6 +3,10 @@ package com.github.jesusmrs05.mcforgecommander.server;
 import com.github.jesusmrs05.mcforgecommander.Tags;
 import com.github.jesusmrs05.mcforgecommander.common.Command;
 import com.github.jesusmrs05.mcforgecommander.mod.config.Config;
+import com.github.jesusmrs05.mcforgecommander.server.threads.ConsumerThread;
+import com.github.jesusmrs05.mcforgecommander.server.threads.ConverterThread;
+import com.github.jesusmrs05.mcforgecommander.server.threads.ProducerThread;
+import com.github.jesusmrs05.mcforgecommander.server.threads.StreamerThread;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -26,17 +30,18 @@ public class Server {
     private Socket clientSocket;
     private ObjectInputStream input;
     private ObjectOutputStream output;
-    private BlockingQueue<Command> commands = new LinkedBlockingQueue<>();
-    private BlockingQueue<byte[]> imageQueue = new LinkedBlockingQueue<>();
-    private BlockingQueue<FrameData> frameDataQueue = new LinkedBlockingQueue<>();
+    private final BlockingQueue<Command> commands = new LinkedBlockingQueue<>();
+    private final BlockingQueue<byte[]> imageQueue = new LinkedBlockingQueue<>();
+    private final BlockingQueue<FrameData> frameDataQueue = new LinkedBlockingQueue<>();
     private ProducerThread producer;
     private ConsumerThread consumer;
     private StreamerThread streamer;
     private ConverterThread converter;
+    private boolean isOn;
 
     public static synchronized Server getInstance() {
-        if (Server.server == null) {
-            Server.server = new Server();
+        if (server == null) {
+            server = new Server();
         }
         return server;
     }
@@ -50,6 +55,11 @@ public class Server {
             @Override
             public void run() {
                 try {
+                    isOn = true;
+                    producer = new ProducerThread();
+                    consumer = new ConsumerThread();
+                    converter = new ConverterThread();
+                    streamer = new StreamerThread();
                     serverSocket = new ServerSocket();
                     serverSocket.setSoTimeout(TIME_OUT);
                     serverSocket.setReuseAddress(true);
@@ -60,13 +70,15 @@ public class Server {
                     output = new ObjectOutputStream(clientSocket.getOutputStream());
                     input = new ObjectInputStream(clientSocket.getInputStream());
                     String password = input.readUTF();
-                    /*if(!password.equals(Config.key)){
-
-                    }*/
-                    producer = new ProducerThread();
-                    consumer = new ConsumerThread();
-                    converter = new ConverterThread();
-                    streamer = new StreamerThread();
+                    while(!password.equals(Config.key)){
+                        close(Config.enableServer);
+                        output.writeUTF("Incorrect Password");
+                        clientSocket = serverSocket.accept();
+                        output = new ObjectOutputStream(clientSocket.getOutputStream());
+                        input = new ObjectInputStream(clientSocket.getInputStream());
+                        password = input.readUTF();
+                    }
+                    output.writeUTF("Welcome");
                     producer.start();
                     consumer.start();
                     converter.start();
@@ -83,18 +95,19 @@ public class Server {
         }).start();
     }
 
-    protected Command getCommand() {
+    public Command getCommand() throws IOException {
         Command command;
         try {
             command = (Command) input.readObject();
-        } catch (ClassNotFoundException | IOException e) {
+        } catch (ClassNotFoundException cnfe) {
             command = null;
-            LOGGER.error("Error getting instruction: {}", e.getMessage());
+            LOGGER.error("Error getting instruction: {}", cnfe.getMessage());
         }
         return command;
     }
 
-    public void close() {
+    public void close(boolean restart) {
+        isOn = false;
         try {
             producer.interrupt();
             consumer.interrupt();
@@ -104,17 +117,22 @@ public class Server {
             input.close();
             clientSocket.close();
             serverSocket.close();
-            server = null;
+            commands.clear();
+            imageQueue.clear();
+            frameDataQueue.clear();
         } catch (IOException e) {
             LOGGER.error("Error closing the server: {}", e.getMessage());
         }
+        if (restart) {
+            startServer(Integer.parseInt(Config.port));
+        }
     }
 
-    protected void add(Command command) throws InterruptedException{
+    public void add(Command command) throws InterruptedException{
         commands.put(command);
     }
 
-    protected Command get() throws InterruptedException {
+    public Command get() throws InterruptedException {
         Command command = commands.take();
         if(commands.size() > MAX_QUEUE_SIZE){
             commands.clear();
@@ -152,5 +170,9 @@ public class Server {
             frameDataQueue.clear();
         }
         return frameData;
+    }
+
+    public boolean isOn(){
+        return isOn;
     }
 }

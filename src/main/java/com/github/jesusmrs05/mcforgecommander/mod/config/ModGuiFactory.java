@@ -62,10 +62,13 @@ public class ModGuiFactory implements IModGuiFactory {
             Config.enableServer = Boolean.parseBoolean(getConfigElements().get(0).get().toString());
             Config.save();
             if (Config.enableServer) {
-                Server.getInstance().startServer(Integer.parseInt(Config.port));
+                Server server = Server.getInstance();
+                if(!server.isOn()){
+                    server.startServer(Integer.parseInt(Config.port));
+                }
             } else {
                 try {
-                    Server.getInstance().close();
+                    Server.getInstance().close(false);
                 } catch (NullPointerException npe) {
                 }
             }

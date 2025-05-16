@@ -26,6 +26,8 @@ import java.util.logging.Logger;
 )
 public class MCForgeCommander {
 
+    //Minecraft.getMinecraft().displayGuiScreen(new GuiAlertDialog("Your Alert Message"));
+
     private long lastCaptureTime = 0;
     private static final long FRAME_CAPTURE_INTERVAL_MS = 33; // fps = 1000/FRAME_CAPTURE_INTERVAL_MS, for example, 10 fps = 100ms
     private Server server;

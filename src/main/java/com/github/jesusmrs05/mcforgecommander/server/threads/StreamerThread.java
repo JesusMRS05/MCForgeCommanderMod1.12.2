@@ -1,4 +1,6 @@
-package com.github.jesusmrs05.mcforgecommander.server;
+package com.github.jesusmrs05.mcforgecommander.server.threads;
+
+import com.github.jesusmrs05.mcforgecommander.server.Server;
 
 import java.io.ObjectOutputStream;
 import java.util.logging.Logger;
