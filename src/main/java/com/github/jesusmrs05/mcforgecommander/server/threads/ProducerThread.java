@@ -17,7 +17,7 @@ public class ProducerThread extends Thread {
                 server.add(command);
             }
         } catch (InterruptedException ie){
-            Thread.currentThread().interrupt();
+            interrupt();
         } catch (IOException ioe) {
             server.close(Config.enableServer);
         } catch (NullPointerException npe) {

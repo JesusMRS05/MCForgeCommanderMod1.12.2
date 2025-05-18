@@ -3,6 +3,8 @@ package com.github.jesusmrs05.mcforgecommander.common;
 import java.io.Serializable;
 
 public class TouchCapture implements Serializable {
+    public static final int MAX_DEPTH = 5;
+
     private int x;
     private int y;
     private int action;
@@ -17,6 +19,14 @@ public class TouchCapture implements Serializable {
         this.lastCapture = lastCapture;
         this.inputWidth = inputWidth;
         this.inputHeight = inputHeight;
+        try {
+            TouchCapture lastLastCapture = this.lastCapture;
+            for (int i = 0; i < MAX_DEPTH; i++) {
+                lastLastCapture = lastLastCapture.lastCapture;
+            }
+            lastLastCapture.setLastCapture(null);
+        } catch (NullPointerException npe){
+        }
     }
 
     public TouchCapture(TouchCapture touchCapture) {
@@ -81,5 +91,9 @@ public class TouchCapture implements Serializable {
 
     public int getInputHeight() {
         return inputHeight;
+    }
+
+    public void setLastCapture(TouchCapture lastCapture){
+        this.lastCapture = lastCapture;
     }
 }

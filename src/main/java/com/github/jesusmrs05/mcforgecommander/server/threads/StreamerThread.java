@@ -1,5 +1,6 @@
 package com.github.jesusmrs05.mcforgecommander.server.threads;
 
+import com.github.jesusmrs05.mcforgecommander.common.ServerPacket;
 import com.github.jesusmrs05.mcforgecommander.server.Server;
 
 import java.io.ObjectOutputStream;
@@ -15,8 +16,8 @@ public class StreamerThread extends Thread {
             while (!isInterrupted()) {
                 byte[] imageBytes = server.takeImage();
                 synchronized (output) {
-                    output.writeInt(imageBytes.length);
-                    output.write(imageBytes);
+                    ServerPacket packet = new ServerPacket(imageBytes, ServerPacket.Type.IMAGE);
+                    output.writeObject(packet);
                     output.flush();
                 }
             }

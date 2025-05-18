@@ -24,20 +24,20 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 public class Server {
     private static final Logger LOGGER = LogManager.getLogger(Tags.MOD_NAME);
-    private static final int MAX_QUEUE_SIZE = 120;
+    public static final int MAX_QUEUE_SIZE = 100;
     private static Server server;
     private ServerSocket serverSocket;
     private Socket clientSocket;
     private ObjectInputStream input;
     private ObjectOutputStream output;
-    private final BlockingQueue<Command> commands = new LinkedBlockingQueue<>();
-    private final BlockingQueue<byte[]> imageQueue = new LinkedBlockingQueue<>();
-    private final BlockingQueue<FrameData> frameDataQueue = new LinkedBlockingQueue<>();
+    private final BlockingQueue<Command> commands = new LinkedBlockingQueue<>(MAX_QUEUE_SIZE);
+    private final BlockingQueue<byte[]> imageQueue = new LinkedBlockingQueue<>(MAX_QUEUE_SIZE);
+    private final BlockingQueue<FrameData> frameDataQueue = new LinkedBlockingQueue<>(MAX_QUEUE_SIZE);
     private ProducerThread producer;
     private ConsumerThread consumer;
     private StreamerThread streamer;
     private ConverterThread converter;
-    private boolean isOn;
+    private volatile boolean isOn;
 
     public static synchronized Server getInstance() {
         if (server == null) {
@@ -115,13 +115,13 @@ public class Server {
             consumer.interrupt();
             converter.interrupt();
             streamer.interrupt();
+            commands.clear();
+            imageQueue.clear();
+            frameDataQueue.clear();
             output.close();
             input.close();
             clientSocket.close();
             serverSocket.close();
-            commands.clear();
-            imageQueue.clear();
-            frameDataQueue.clear();
         } catch (IOException e) {
             LOGGER.error("Error closing the server: {}", e.getMessage());
         }
@@ -136,9 +136,9 @@ public class Server {
 
     public Command get() throws InterruptedException {
         Command command = commands.take();
-        if(commands.size() > MAX_QUEUE_SIZE){
+        /*if(commands.size() > MAX_QUEUE_SIZE){
             commands.clear();
-        }
+        }*/
         return command;
     }
 
@@ -152,9 +152,9 @@ public class Server {
 
     public byte[] takeImage() throws InterruptedException {
         byte[] bytes = imageQueue.take();
-        if(imageQueue.size() > MAX_QUEUE_SIZE){
+        /*if(imageQueue.size() > MAX_QUEUE_SIZE){
             imageQueue.clear();
-        }
+        }*/
         return bytes;
     }
 
@@ -162,15 +162,15 @@ public class Server {
         return clientSocket;
     }
 
-    public void enqueueFrameData(FrameData frameData) throws InterruptedException {
-        frameDataQueue.put(frameData);
+    public void offerFrameData(FrameData frameData) {
+        frameDataQueue.offer(frameData);
     }
 
     public FrameData takeFrameData() throws InterruptedException {
         FrameData frameData = frameDataQueue.take();
-        if(frameDataQueue.size() > MAX_QUEUE_SIZE){
+        /*if(frameDataQueue.size() > MAX_QUEUE_SIZE){
             frameDataQueue.clear();
-        }
+        }*/
         return frameData;
     }
 

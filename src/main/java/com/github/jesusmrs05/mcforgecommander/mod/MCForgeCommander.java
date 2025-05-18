@@ -29,7 +29,7 @@ public class MCForgeCommander {
     //Minecraft.getMinecraft().displayGuiScreen(new GuiAlertDialog("Your Alert Message"));
 
     private long lastCaptureTime = 0;
-    private static final long FRAME_CAPTURE_INTERVAL_MS = 33; // fps = 1000/FRAME_CAPTURE_INTERVAL_MS, for example, 10 fps = 100ms
+    private static final long FRAME_CAPTURE_INTERVAL_MS = 40; // fps = 1000/FRAME_CAPTURE_INTERVAL_MS, for example, 10 fps = 100ms
     private Server server;
 
     @Mod.EventHandler
@@ -41,7 +41,7 @@ public class MCForgeCommander {
 
     @SubscribeEvent
     public void onRenderTick(TickEvent.RenderTickEvent event) {
-        if (event.phase == TickEvent.Phase.END) {
+        if (server.isOn() && event.phase == TickEvent.Phase.END) {
             long currentTime = System.currentTimeMillis();
             if ((currentTime - lastCaptureTime) >= FRAME_CAPTURE_INTERVAL_MS && server.getOutput() != null && server.getClientSocket().isConnected()) {
                 try {
@@ -54,7 +54,7 @@ public class MCForgeCommander {
                     buffer.rewind();
 
                     FrameData frameData = new FrameData(buffer, width, height);
-                    server.enqueueFrameData(frameData);
+                    server.offerFrameData(frameData);
 
                     lastCaptureTime = currentTime;
                 } catch (Exception e) {

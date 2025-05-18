@@ -11,8 +11,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
 
 public class ConsumerThread extends Thread {
-    private BlockingQueue<Command> movementCommands = new LinkedBlockingQueue<>();
-    private BlockingQueue<Command> chatCommands = new LinkedBlockingQueue<>();
+    private BlockingQueue<Command> movementCommands = new LinkedBlockingQueue<>(Server.MAX_QUEUE_SIZE);
+    private BlockingQueue<Command> chatCommands = new LinkedBlockingQueue<>(Server.MAX_QUEUE_SIZE);
 
     private Runnable movementThreadRunnable = new Runnable() {
         @Override
@@ -23,7 +23,11 @@ public class ConsumerThread extends Thread {
                     Serializable params = command.getParams();
                     Instruction instruction = command.getInstruction();
                     Action action = Action.valueOf(instruction.name());
-                    action.accept(params);
+                    try {
+                        action.accept(params);
+                    } catch (Exception e){
+                        Logger.getLogger("MCForgeCommander").info("ConsumerThreadMovement Exception while executing "+instruction.name());
+                    }
                 }
             } catch (NullPointerException npe) {
                 Logger.getLogger("MCForgeCommander").info("ConsumerThreadMovement NullPointerException");
@@ -42,7 +46,11 @@ public class ConsumerThread extends Thread {
                     Serializable params = command.getParams();
                     Instruction instruction = command.getInstruction();
                     Action action = Action.valueOf(instruction.name());
+                    try{
                     action.accept(params);
+                    } catch (Exception e){
+                        Logger.getLogger("MCForgeCommander").info("ConsumerThreadChat Exception while executing "+instruction.name());
+                    }
                 }
             } catch (NullPointerException npe) {
                 Logger.getLogger("MCForgeCommander").info("ConsumerThreadChat NullPointerException");
@@ -80,9 +88,9 @@ public class ConsumerThread extends Thread {
             Logger.getLogger("MCForgeCommander").info("ConsumerThread NullPointerException");
         } catch (InterruptedException ie) {
             Thread.currentThread().interrupt();
-            movementThread.interrupt();
-            chatThread.interrupt();
         }
+        movementThread.interrupt();
+        chatThread.interrupt();
     }
 
     public void addMovement(Command command) throws InterruptedException {
