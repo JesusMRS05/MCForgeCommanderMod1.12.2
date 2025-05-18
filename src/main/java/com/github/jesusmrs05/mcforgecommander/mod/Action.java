@@ -38,15 +38,20 @@ public enum Action implements Consumer<Serializable> {
 
         @Override
         public void accept(Serializable params) {
-            isMoving = !isMoving;
+            boolean shouldMove = false;
+            if (params instanceof Boolean) {
+                shouldMove = (Boolean) params;
+            }
             Logger logger = LogManager.getLogger("MCForgeCommander");
 
-            if (isMoving) {
+            if (shouldMove && !isMoving) {
                 MinecraftForge.EVENT_BUS.register(movementListener);
                 logger.info("Move forward ENABLED");
-            } else {
+                isMoving = true;
+            } else if (!shouldMove && isMoving) {
                 MinecraftForge.EVENT_BUS.unregister(movementListener);
                 logger.info("Move forward DISABLED");
+                isMoving = false;
             }
         }
     },
@@ -64,15 +69,20 @@ public enum Action implements Consumer<Serializable> {
 
         @Override
         public void accept(Serializable params) {
-            isMoving = !isMoving;
+            boolean shouldMove = false;
+            if (params instanceof Boolean) {
+                shouldMove = (Boolean) params;
+            }
             Logger logger = LogManager.getLogger("MCForgeCommander");
 
-            if (isMoving) {
+            if (shouldMove && !isMoving) {
                 MinecraftForge.EVENT_BUS.register(movementListener);
                 logger.info("Move backward ENABLED");
-            } else {
+                isMoving = true;
+            } else if (!shouldMove && isMoving) {
                 MinecraftForge.EVENT_BUS.unregister(movementListener);
                 logger.info("Move backward DISABLED");
+                isMoving = false;
             }
         }
     },
@@ -90,15 +100,20 @@ public enum Action implements Consumer<Serializable> {
 
         @Override
         public void accept(Serializable params) {
-            isMoving = !isMoving;
+            boolean shouldMove = false;
+            if (params instanceof Boolean) {
+                shouldMove = (Boolean) params;
+            }
             Logger logger = LogManager.getLogger("MCForgeCommander");
 
-            if (isMoving) {
+            if (shouldMove && !isMoving) {
                 MinecraftForge.EVENT_BUS.register(movementListener);
                 logger.info("Move left ENABLED");
-            } else {
+                isMoving = true;
+            } else if (!shouldMove && isMoving) {
                 MinecraftForge.EVENT_BUS.unregister(movementListener);
                 logger.info("Move left DISABLED");
+                isMoving = false;
             }
         }
     },
@@ -116,19 +131,23 @@ public enum Action implements Consumer<Serializable> {
 
         @Override
         public void accept(Serializable params) {
-            isMoving = !isMoving;
+            boolean shouldMove = false;
+            if (params instanceof Boolean) {
+                shouldMove = (Boolean) params;
+            }
             Logger logger = LogManager.getLogger("MCForgeCommander");
 
-            if (isMoving) {
+            if (shouldMove && !isMoving) {
                 MinecraftForge.EVENT_BUS.register(movementListener);
                 logger.info("Move right ENABLED");
-            } else {
+                isMoving = true;
+            } else if (!shouldMove && isMoving) {
                 MinecraftForge.EVENT_BUS.unregister(movementListener);
                 logger.info("Move right DISABLED");
+                isMoving = false;
             }
         }
     },
-
     SEND_MESSAGE_TO_CHAT {
         @Override
         public void accept(Serializable params) {
