@@ -57,9 +57,13 @@ public class Server {
                 try {
                     isOn = true;
                     producer = new ProducerThread();
+                    producer.setName("ProducerThread");
                     consumer = new ConsumerThread();
+                    consumer.setName("ConsumerThread");
                     converter = new ConverterThread();
+                    converter.setName("ConverterThread");
                     streamer = new StreamerThread();
+                    streamer.setName("StreamerThread");
                     serverSocket = new ServerSocket();
                     serverSocket.setSoTimeout(TIME_OUT);
                     serverSocket.setReuseAddress(true);

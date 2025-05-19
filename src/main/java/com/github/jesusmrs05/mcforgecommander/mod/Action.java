@@ -219,7 +219,6 @@ public enum Action implements Consumer<Serializable> {
                             releaseMethod.setAccessible(true);
                             releaseMethod.invoke(mc.currentScreen, guiX, guiY, 0);
                         } catch (Exception e) {
-                            LogManager.getLogger("MCForgeCommander").error("Error al simular clic en GUI", e);
                         }
                     });
                 }

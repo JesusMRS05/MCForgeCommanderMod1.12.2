@@ -64,7 +64,9 @@ public class ConsumerThread extends Thread {
     public void run() {
         Server server = Server.getInstance();
         Thread movementThread = new Thread(movementThreadRunnable);
+        movementThread.setName("MovementThread");
         Thread chatThread = new Thread(chatThreadRunnable);
+        chatThread.setName("ChatThread");
         movementThread.start();
         chatThread.start();
         try {
