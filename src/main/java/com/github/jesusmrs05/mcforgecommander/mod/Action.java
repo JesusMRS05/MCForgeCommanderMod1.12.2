@@ -275,5 +275,16 @@ public enum Action implements Consumer<Serializable> {
                 Minecraft.getMinecraft().player.inventory.currentItem = hotbarSlot;
             }
         }
+    },
+    PRESS_JUMP_KEY {
+        @Override
+        public void accept(Serializable params) {
+            Minecraft mc = Minecraft.getMinecraft();
+            EntityPlayerSP player = mc.player;
+
+            if (player != null && player.onGround) {
+                player.jump();
+            }
+        }
     };
 }

@@ -11,6 +11,9 @@ import com.github.jesusmrs05.mcforgecommander.server.threads.StreamerThread;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.BufferedInputStream;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -50,41 +53,58 @@ public class Server {
     }
 
     public void startServer(int port) {
-        final int TIME_OUT = 3600000; //milliseconds, 1 hour (this should be changed later)
+        final int TIME_OUT = 3600000;
         new Thread(new Runnable() {
             @Override
             public void run() {
                 try {
                     isOn = true;
-                    producer = new ProducerThread();
+                    producer  = new ProducerThread();
                     producer.setName("ProducerThread");
-                    consumer = new ConsumerThread();
+                    consumer  = new ConsumerThread();
                     consumer.setName("ConsumerThread");
                     converter = new ConverterThread();
                     converter.setName("ConverterThread");
-                    streamer = new StreamerThread();
+                    streamer  = new StreamerThread();
                     streamer.setName("StreamerThread");
+
                     serverSocket = new ServerSocket();
-                    serverSocket.setSoTimeout(TIME_OUT);
                     serverSocket.setReuseAddress(true);
                     serverSocket.bind(new InetSocketAddress(port));
+                    serverSocket.setSoTimeout(TIME_OUT);
+
                     LOGGER.info("Waiting for client...");
                     clientSocket = serverSocket.accept();
-                    LOGGER.info("Client connected");
+                    clientSocket.setTcpNoDelay(true);
+
+                    LOGGER.info("Creating output");
                     output = new ObjectOutputStream(clientSocket.getOutputStream());
+                    output.flush();
+
+                    LOGGER.info("Creating input");
                     input = new ObjectInputStream(clientSocket.getInputStream());
-                    String password = input.readUTF();
-                    while(!password.equals(Config.key)){
-                        close(Config.enableServer);
-                        output.writeUTF("Incorrect Password");
+
+                    LOGGER.info("Going to read");
+                    String password = (String) input.readObject();
+
+                    while (!password.equals(Config.key)) {
+                        output.writeObject("Incorrect Password");
+                        output.flush();
+                        clientSocket.close();
                         LOGGER.info("Waiting for client...");
                         clientSocket = serverSocket.accept();
                         LOGGER.info("Client connected");
                         output = new ObjectOutputStream(clientSocket.getOutputStream());
+                        output.flush();
                         input = new ObjectInputStream(clientSocket.getInputStream());
                         password = input.readUTF();
                     }
-                    output.writeUTF("Welcome");
+
+                    LOGGER.info("Sending Response");
+                    output.writeObject("Welcome");
+                    output.flush();
+                    LOGGER.info("Response Sent");
+
                     producer.start();
                     consumer.start();
                     converter.start();
@@ -96,6 +116,8 @@ public class Server {
                     e.printStackTrace(pw);
                     String stackTrace = sw.toString();
                     LOGGER.error(stackTrace);
+                } catch (ClassNotFoundException cnfe){
+
                 }
             }
         }).start();
@@ -131,10 +153,12 @@ public class Server {
         }
         if (restart) {
             startServer(Integer.parseInt(Config.port));
+        } else {
+            LOGGER.info("Server closed");
         }
     }
 
-    public void add(Command command) throws InterruptedException{
+    public void add(Command command) throws InterruptedException {
         commands.put(command);
     }
 
@@ -162,7 +186,7 @@ public class Server {
         return bytes;
     }
 
-    public Socket getClientSocket(){
+    public Socket getClientSocket() {
         return clientSocket;
     }
 
@@ -178,7 +202,7 @@ public class Server {
         return frameData;
     }
 
-    public boolean isOn(){
+    public boolean isOn() {
         return isOn;
     }
 }

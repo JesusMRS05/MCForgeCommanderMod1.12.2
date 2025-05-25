@@ -76,7 +76,8 @@ public class ConsumerThread extends Thread {
                         Instruction.TOGGLE_MOVE_BACKWARD.name() + "|" +
                         Instruction.TOGGLE_MOVE_LEFT.name() + "|" +
                         Instruction.TOGGLE_MOVE_RIGHT.name() + "|" +
-                        Instruction.SCREEN_TOUCH.name())) {
+                        Instruction.SCREEN_TOUCH.name() + "|" +
+                        Instruction.PRESS_JUMP_KEY.name())) {
                     addMovement(command);
                 } else if (command.getInstruction().name().matches(Instruction.SEND_MESSAGE_TO_CHAT.name() + "|" +
                         Instruction.PRESS_CHAT_KEY.name() + "|" +

@@ -19,7 +19,7 @@ import javax.imageio.stream.ImageOutputStream;
 public class ConverterThread extends Thread {
     private static final int TARGET_WIDTH = 426;
     private static final int TARGET_HEIGTH = 240;
-    private static final float JPEG_QUALITY = 0.2F; //0.2F
+    private static final float JPEG_QUALITY = 0.5F; //0.5F
     @Override
     public void run() {
         Server server = Server.getInstance();
