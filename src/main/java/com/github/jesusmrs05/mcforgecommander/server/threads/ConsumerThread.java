@@ -10,6 +10,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Logger;
 
+// TODO The "movement" and "chat" distinction should be renamed to something more descriptive. They served a different purpose originally
 public class ConsumerThread extends Thread {
     private BlockingQueue<Command> movementCommands = new LinkedBlockingQueue<>(Server.MAX_QUEUE_SIZE);
     private BlockingQueue<Command> chatCommands = new LinkedBlockingQueue<>(Server.MAX_QUEUE_SIZE);

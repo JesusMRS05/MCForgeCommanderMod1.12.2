@@ -15,7 +15,11 @@ import net.minecraftforge.fml.common.gameevent.TickEvent;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 
+import java.io.File;
+import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
+import java.util.List;
 import java.util.logging.Logger;
 
 @Mod(
@@ -26,10 +30,11 @@ import java.util.logging.Logger;
 )
 public class MCForgeCommander {
 
-    //Minecraft.getMinecraft().displayGuiScreen(new GuiAlertDialog("Your Alert Message"));
+    //TODO add Minecraft.getMinecraft().displayGuiScreen(new GuiAlertDialog("Your Alert Message")); to Server.startServer when something goes wrong
 
     private long lastCaptureTime = 0;
-    private static final long FRAME_CAPTURE_INTERVAL_MS = 40;//40; // fps = 1000/FRAME_CAPTURE_INTERVAL_MS, for example, 10 fps = 100ms
+    private static int frameCaptureIntervalMS = 40;//40 = 25fps; // fps = 1000/frameCaptureIntervalMS, for example, 10 fps = 100ms
+    private static int startingFrameLimit = 120;
     private Server server;
 
     @Mod.EventHandler
@@ -37,13 +42,39 @@ public class MCForgeCommander {
         Config.init(event.getSuggestedConfigurationFile());
         server = Server.getInstance();
         MinecraftForge.EVENT_BUS.register(this);
+        startingFrameLimit = Minecraft.getMinecraft().gameSettings.limitFramerate;
+        Minecraft mc = Minecraft.getMinecraft();
+        startingFrameLimit = mc.gameSettings.limitFramerate;
+
+        int frameCaptureInterval = 1000 / frameCaptureIntervalMS;
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            try {
+                File optionsFile = new File(mc.gameDir, "options.txt");
+                List<String> lines = Files.readAllLines(optionsFile.toPath());
+
+                for (int i = 0; i < lines.size(); i++) {
+                    if (lines.get(i).startsWith("maxFps:")) {
+                        int currentLimit = Integer.parseInt(lines.get(i).split(":")[1].trim());
+                        if (currentLimit == frameCaptureInterval) {
+                            lines.set(i, "maxFps:" + startingFrameLimit);
+                            break;
+                        }
+                    }
+                }
+
+                Files.write(optionsFile.toPath(), lines);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }));
     }
 
     @SubscribeEvent
     public void onRenderTick(TickEvent.RenderTickEvent event) {
         if (server.isOn() && event.phase == TickEvent.Phase.END) {
             long currentTime = System.currentTimeMillis();
-            if ((currentTime - lastCaptureTime) >= FRAME_CAPTURE_INTERVAL_MS && server.getOutput() != null && server.getClientSocket().isConnected()) {
+            if ((currentTime - lastCaptureTime) >= frameCaptureIntervalMS && server.getOutput() != null && server.getClientSocket().isConnected()) {
                 try {
                     Minecraft mc = Minecraft.getMinecraft();
                     int width = mc.displayWidth;
@@ -62,5 +93,17 @@ public class MCForgeCommander {
                 }
             }
         }
+    }
+
+    public static void setFPS(int fps) {
+        if (fps <= 0 || fps > 60) {
+            throw new IllegalArgumentException("FPS must be between 1 and 60");
+        } else {
+            frameCaptureIntervalMS = 1000 / fps;
+        }
+    }
+
+    public static int getStartingFrameLimit(){
+        return startingFrameLimit;
     }
 }

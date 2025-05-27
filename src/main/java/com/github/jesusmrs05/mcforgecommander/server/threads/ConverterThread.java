@@ -19,7 +19,7 @@ import javax.imageio.stream.ImageOutputStream;
 public class ConverterThread extends Thread {
     private static final int TARGET_WIDTH = 426;
     private static final int TARGET_HEIGTH = 240;
-    private static final float JPEG_QUALITY = 0.5F; //0.5F
+    private static float jpegQuality = 0.2F; //0.5F LAN, 0.2F WAN
     @Override
     public void run() {
         Server server = Server.getInstance();
@@ -69,7 +69,7 @@ public class ConverterThread extends Thread {
         ImageWriteParam jpgWriteParam = jpgWriter.getDefaultWriteParam();
 
         jpgWriteParam.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
-        jpgWriteParam.setCompressionQuality(JPEG_QUALITY);
+        jpgWriteParam.setCompressionQuality(jpegQuality);
 
         ImageOutputStream ios = ImageIO.createImageOutputStream(baos);
         jpgWriter.setOutput(ios);
@@ -81,4 +81,11 @@ public class ConverterThread extends Thread {
         return baos.toByteArray();
     }
 
+    public static void setJpegQuality(float quality){
+        if (quality < 0.1F || quality > 1.0F) {
+            throw new IllegalArgumentException("Quality must be between 0.1 and 1.0");
+        } else {
+            jpegQuality = quality;
+        }
+    }
 }

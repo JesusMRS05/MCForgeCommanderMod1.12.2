@@ -2,6 +2,7 @@ package com.github.jesusmrs05.mcforgecommander.server;
 
 import com.github.jesusmrs05.mcforgecommander.Tags;
 import com.github.jesusmrs05.mcforgecommander.common.Command;
+import com.github.jesusmrs05.mcforgecommander.mod.Action;
 import com.github.jesusmrs05.mcforgecommander.mod.config.Config;
 import com.github.jesusmrs05.mcforgecommander.server.threads.ConsumerThread;
 import com.github.jesusmrs05.mcforgecommander.server.threads.ConverterThread;
@@ -71,7 +72,6 @@ public class Server {
                     serverSocket = new ServerSocket();
                     serverSocket.setReuseAddress(true);
                     serverSocket.bind(new InetSocketAddress(port));
-                    serverSocket.setSoTimeout(TIME_OUT);
 
                     LOGGER.info("Waiting for client...");
                     clientSocket = serverSocket.accept();
@@ -85,7 +85,7 @@ public class Server {
                     input = new ObjectInputStream(clientSocket.getInputStream());
 
                     LOGGER.info("Going to read");
-                    String password = (String) input.readObject();
+                    String password = input.readUTF();
 
                     while (!password.equals(Config.key)) {
                         output.writeObject("Incorrect Password");
@@ -101,9 +101,12 @@ public class Server {
                     }
 
                     LOGGER.info("Sending Response");
-                    output.writeObject("Welcome");
+                    output.writeUTF("Welcome");
                     output.flush();
                     LOGGER.info("Response Sent");
+
+                    Action.SET_FPS.accept(input.readInt());
+                    Action.SET_JPEG_QUALITY.accept(input.readFloat());
 
                     producer.start();
                     consumer.start();
@@ -116,8 +119,6 @@ public class Server {
                     e.printStackTrace(pw);
                     String stackTrace = sw.toString();
                     LOGGER.error(stackTrace);
-                } catch (ClassNotFoundException cnfe){
-
                 }
             }
         }).start();

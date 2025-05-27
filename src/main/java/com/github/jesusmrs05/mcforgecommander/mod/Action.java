@@ -1,6 +1,7 @@
 package com.github.jesusmrs05.mcforgecommander.mod;
 
 import com.github.jesusmrs05.mcforgecommander.common.TouchCapture;
+import com.github.jesusmrs05.mcforgecommander.server.threads.ConverterThread;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
@@ -284,6 +285,28 @@ public enum Action implements Consumer<Serializable> {
 
             if (player != null && player.onGround) {
                 player.jump();
+            }
+        }
+    },
+    SET_FPS {
+        @Override
+        public void accept(Serializable params) {
+            if (params instanceof Integer) {
+                int fps = (Integer) params;
+                MCForgeCommander.setFPS(fps);
+                Minecraft minecraft = Minecraft.getMinecraft();
+                minecraft.gameSettings.limitFramerate = fps;
+            }
+        }
+    },
+    SET_JPEG_QUALITY {
+        Logger logger = LogManager.getLogger("MCForgeCommander");
+        @Override
+        public void accept(Serializable params) {
+            if (params instanceof Float) {
+                float quality = (Float) params;
+                ConverterThread.setJpegQuality(quality);
+                logger.info("JPEG Quality set to: " + quality);
             }
         }
     };

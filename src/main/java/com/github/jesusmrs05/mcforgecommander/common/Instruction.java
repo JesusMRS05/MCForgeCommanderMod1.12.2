@@ -13,5 +13,7 @@ public enum Instruction implements Serializable {
     PRESS_INVENTORY_KEY,
     PRESS_MENU_KEY,
     PRESS_CERTAIN_HOTBAR_KEY,
-    PRESS_JUMP_KEY;
+    PRESS_JUMP_KEY,
+    SET_FPS,
+    SET_JPEG_QUALITY;
 }
