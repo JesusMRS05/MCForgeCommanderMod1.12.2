@@ -14,6 +14,7 @@ import java.util.logging.Logger;
 public class ConsumerThread extends Thread {
     private BlockingQueue<Command> movementCommands = new LinkedBlockingQueue<>(Server.MAX_QUEUE_SIZE);
     private BlockingQueue<Command> chatCommands = new LinkedBlockingQueue<>(Server.MAX_QUEUE_SIZE);
+    private BlockingQueue<Command> clickCommands = new LinkedBlockingQueue<>(Server.MAX_QUEUE_SIZE);
 
     private Runnable movementThreadRunnable = new Runnable() {
         @Override
@@ -26,8 +27,8 @@ public class ConsumerThread extends Thread {
                     Action action = Action.valueOf(instruction.name());
                     try {
                         action.accept(params);
-                    } catch (Exception e){
-                        Logger.getLogger("MCForgeCommander").info("ConsumerThreadMovement Exception while executing "+instruction.name());
+                    } catch (Exception e) {
+                        Logger.getLogger("MCForgeCommander").info("ConsumerThreadMovement Exception while executing " + instruction.name());
                     }
                 }
             } catch (NullPointerException npe) {
@@ -47,10 +48,33 @@ public class ConsumerThread extends Thread {
                     Serializable params = command.getParams();
                     Instruction instruction = command.getInstruction();
                     Action action = Action.valueOf(instruction.name());
-                    try{
-                    action.accept(params);
-                    } catch (Exception e){
-                        Logger.getLogger("MCForgeCommander").info("ConsumerThreadChat Exception while executing "+instruction.name());
+                    try {
+                        action.accept(params);
+                    } catch (Exception e) {
+                        Logger.getLogger("MCForgeCommander").info("ConsumerThreadChat Exception while executing " + instruction.name());
+                    }
+                }
+            } catch (NullPointerException npe) {
+                Logger.getLogger("MCForgeCommander").info("ConsumerThreadChat NullPointerException");
+            } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();
+            }
+        }
+    };
+
+    private Runnable clickThreadRunnable = new Runnable() {
+        @Override
+        public void run() {
+            try {
+                while (!isInterrupted()) {
+                    Command command = getClick();
+                    Serializable params = command.getParams();
+                    Instruction instruction = command.getInstruction();
+                    Action action = Action.valueOf(instruction.name());
+                    try {
+                        action.accept(params);
+                    } catch (Exception e) {
+                        Logger.getLogger("MCForgeCommander").info("ConsumerThreadChat Exception while executing " + instruction.name());
                     }
                 }
             } catch (NullPointerException npe) {
@@ -68,24 +92,35 @@ public class ConsumerThread extends Thread {
         movementThread.setName("MovementThread");
         Thread chatThread = new Thread(chatThreadRunnable);
         chatThread.setName("ChatThread");
+        Thread clickThread = new Thread(clickThreadRunnable);
+        clickThread.setName("ClickThread");
         movementThread.start();
         chatThread.start();
+        clickThread.start();
         try {
             while (!isInterrupted()) {
                 Command command = server.get();
-                if (command.getInstruction().name().matches(Instruction.TOGGLE_MOVE_FORWARD.name() + "|" +
-                        Instruction.TOGGLE_MOVE_BACKWARD.name() + "|" +
-                        Instruction.TOGGLE_MOVE_LEFT.name() + "|" +
-                        Instruction.TOGGLE_MOVE_RIGHT.name() + "|" +
-                        Instruction.SCREEN_TOUCH.name() + "|" +
-                        Instruction.PRESS_JUMP_KEY.name())) {
-                    addMovement(command);
-                } else if (command.getInstruction().name().matches(Instruction.SEND_MESSAGE_TO_CHAT.name() + "|" +
-                        Instruction.PRESS_CHAT_KEY.name() + "|" +
-                        Instruction.PRESS_INVENTORY_KEY.name() + "|" +
-                        Instruction.PRESS_MENU_KEY.name() + "|" +
-                        Instruction.PRESS_CERTAIN_HOTBAR_KEY.name())) {
-                    addChat(command);
+                Instruction instruction = command.getInstruction();
+                switch (instruction) {
+                    case TOGGLE_MOVE_BACKWARD:
+                    case TOGGLE_MOVE_FORWARD:
+                    case TOGGLE_MOVE_LEFT:
+                    case TOGGLE_MOVE_RIGHT:
+                    case SCREEN_TOUCH:
+                    case PRESS_JUMP_KEY:
+                        addMovement(command);
+                        break;
+                    case LEFT_CLICK:
+                    case RIGHT_CLICK:
+                        addClick(command);
+                        break;
+                    case SEND_MESSAGE_TO_CHAT:
+                    case PRESS_CHAT_KEY:
+                    case PRESS_INVENTORY_KEY:
+                    case PRESS_MENU_KEY:
+                    case PRESS_CERTAIN_HOTBAR_KEY:
+                        addChat(command);
+                        break;
                 }
             }
         } catch (NullPointerException npe) {
@@ -95,6 +130,7 @@ public class ConsumerThread extends Thread {
         }
         movementThread.interrupt();
         chatThread.interrupt();
+        clickThread.interrupt();
     }
 
     public void addMovement(Command command) throws InterruptedException {
@@ -111,5 +147,13 @@ public class ConsumerThread extends Thread {
 
     public Command getChat() throws InterruptedException {
         return chatCommands.take();
+    }
+
+    public Command getClick() throws InterruptedException {
+        return clickCommands.take();
+    }
+
+    public void addClick(Command command) throws InterruptedException {
+        clickCommands.put(command);
     }
 }

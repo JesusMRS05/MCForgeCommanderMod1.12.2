@@ -7,9 +7,12 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.ScaledResolution;
+import net.minecraft.client.multiplayer.PlayerControllerMP;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.network.play.client.CPacketChatMessage;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RayTraceResult;
 import net.minecraftforge.client.event.InputUpdateEvent;
 import net.minecraftforge.common.MinecraftForge;
@@ -301,6 +304,7 @@ public enum Action implements Consumer<Serializable> {
     },
     SET_JPEG_QUALITY {
         Logger logger = LogManager.getLogger("MCForgeCommander");
+
         @Override
         public void accept(Serializable params) {
             if (params instanceof Float) {
@@ -308,6 +312,49 @@ public enum Action implements Consumer<Serializable> {
                 ConverterThread.setJpegQuality(quality);
                 logger.info("JPEG Quality set to: " + quality);
             }
+        }
+    },
+    LEFT_CLICK {
+        @Override
+        public void accept(Serializable params) {
+            if (params instanceof Boolean) {
+                boolean isHolding = (Boolean) params;
+                Minecraft mc = Minecraft.getMinecraft();
+                EntityPlayerSP player = mc.player;
+                if (player == null) return;
+
+                RayTraceResult hit = mc.objectMouseOver;
+                if (hit == null) return;
+
+                switch (hit.typeOfHit) {
+                    case ENTITY:
+                        if (!isHolding) {
+                            mc.playerController.attackEntity(player, hit.entityHit);
+                            player.swingArm(EnumHand.MAIN_HAND);
+                        }
+                        break;
+
+                    case BLOCK:
+                        int damageTicks = isHolding ? 1 : 4;
+                        for (int i = 0; i < damageTicks; i++) {
+                            BlockPos pos = hit.getBlockPos();
+                            EnumFacing side = hit.sideHit;
+                            mc.playerController.onPlayerDamageBlock(pos, side);
+                        }
+                        player.swingArm(EnumHand.MAIN_HAND);
+                        break;
+
+                    default:
+                        break;
+                }
+            }
+        }
+    },
+    RIGHT_CLICK {
+        @Override
+        public void accept(Serializable params) {
+            Minecraft mc = Minecraft.getMinecraft();
+            mc.player.swingArm(EnumHand.OFF_HAND);
         }
     };
 }

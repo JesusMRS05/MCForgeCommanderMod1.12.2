@@ -15,5 +15,7 @@ public enum Instruction implements Serializable {
     PRESS_CERTAIN_HOTBAR_KEY,
     PRESS_JUMP_KEY,
     SET_FPS,
-    SET_JPEG_QUALITY;
+    SET_JPEG_QUALITY,
+    LEFT_CLICK,
+    RIGHT_CLICK,
 }
