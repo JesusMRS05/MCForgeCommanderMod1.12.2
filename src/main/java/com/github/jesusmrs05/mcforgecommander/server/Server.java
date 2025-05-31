@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.PrintWriter;
+import java.io.StreamCorruptedException;
 import java.io.StringWriter;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -75,6 +76,7 @@ public class Server {
 
                     LOGGER.info("Waiting for client...");
                     clientSocket = serverSocket.accept();
+                    LOGGER.info("Client connected with IP: {}", clientSocket.getInetAddress().getHostAddress());
                     clientSocket.setTcpNoDelay(true);
 
                     LOGGER.info("Creating output");
@@ -88,6 +90,7 @@ public class Server {
                     String password = input.readUTF();
 
                     while (!password.equals(Config.key)) {
+                        LOGGER.info("Incorrect Password");
                         output.writeObject("Incorrect Password");
                         output.flush();
                         clientSocket.close();
@@ -112,13 +115,28 @@ public class Server {
                     consumer.start();
                     converter.start();
                     streamer.start();
-                } catch (IOException e) {
+                } catch (StreamCorruptedException sce) {
+                    LOGGER.error("Error starting the server: {}", sce.getMessage());
+                    StringWriter sw = new StringWriter();
+                    PrintWriter pw = new PrintWriter(sw);
+                    sce.printStackTrace(pw);
+                    String stackTrace = sw.toString();
+                    server.close(Config.enableServer);
+                }catch (IOException e) {
                     LOGGER.error("Error starting the server: {}", e.getMessage());
                     StringWriter sw = new StringWriter();
                     PrintWriter pw = new PrintWriter(sw);
                     e.printStackTrace(pw);
                     String stackTrace = sw.toString();
                     LOGGER.error(stackTrace);
+                } catch (Exception e){
+                    LOGGER.error("Error starting the server: {}", e.getMessage());
+                    StringWriter sw = new StringWriter();
+                    PrintWriter pw = new PrintWriter(sw);
+                    e.printStackTrace(pw);
+                    String stackTrace = sw.toString();
+                    LOGGER.error(stackTrace);
+                    server.close(Config.enableServer);
                 }
             }
         }).start();
