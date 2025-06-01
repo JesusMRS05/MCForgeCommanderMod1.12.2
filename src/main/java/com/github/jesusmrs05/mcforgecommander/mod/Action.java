@@ -14,6 +14,7 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RayTraceResult;
+import net.minecraft.util.math.Vec3d;
 import net.minecraftforge.client.event.InputUpdateEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
@@ -353,8 +354,28 @@ public enum Action implements Consumer<Serializable> {
     RIGHT_CLICK {
         @Override
         public void accept(Serializable params) {
+            Logger logger = LogManager.getLogger("MCForgeCommander");
+            logger.info("Right click started");
             Minecraft mc = Minecraft.getMinecraft();
-            mc.player.swingArm(EnumHand.OFF_HAND);
+            RayTraceResult ray = mc.objectMouseOver;
+
+            if (ray != null && ray.typeOfHit == RayTraceResult.Type.BLOCK) {
+                BlockPos pos = ray.getBlockPos();
+                EnumFacing side = ray.sideHit;
+                Vec3d hitVec = ray.hitVec;
+
+                mc.playerController.processRightClickBlock(
+                        mc.player,
+                        mc.world,
+                        pos,
+                        side,
+                        hitVec,
+                        EnumHand.MAIN_HAND
+                );
+                mc.player.swingArm(EnumHand.MAIN_HAND); // animación opcional
+            }
+
+            logger.info("Right click finished");
         }
     };
 }
