@@ -112,6 +112,7 @@ public class ConsumerThread extends Thread {
                         break;
                     case LEFT_CLICK:
                     case RIGHT_CLICK:
+                    case TOGGLE_SNEAKING:
                         addClick(command);
                         break;
                     case SEND_MESSAGE_TO_CHAT:

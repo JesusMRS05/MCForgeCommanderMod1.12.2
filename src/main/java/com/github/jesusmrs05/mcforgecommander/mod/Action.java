@@ -304,14 +304,46 @@ public enum Action implements Consumer<Serializable> {
     },
 
     PRESS_JUMP_KEY {
+        private final long JUMP_DELAY = 200;
+        private long lastClickTime = 0;
+        private boolean wasFlyingLastClick = false;
+
         @Override
         public void accept(Serializable params) {
+            if (!(params instanceof Long)) return;
+            long now = (Long) params;
+
             Minecraft mc = Minecraft.getMinecraft();
 
             mc.addScheduledTask(() -> {
                 EntityPlayerSP player = mc.player;
-                if (player != null && player.onGround) {
+                if (player == null) return;
+
+                boolean canFly = player.capabilities.allowFlying;
+                boolean isFlying = player.capabilities.isFlying;
+
+                if (player.onGround) {
+                    // Salto normal si está en el suelo
                     player.jump();
+                    wasFlyingLastClick = false;
+                    lastClickTime = now;
+                } else if (canFly) {
+                    if (isFlying && (now - lastClickTime) < JUMP_DELAY && wasFlyingLastClick) {
+                        // Si estaba volando y clic rápido: dejar de volar
+                        player.capabilities.isFlying = false;
+                        player.sendPlayerAbilities();
+                    } else if (!isFlying && (now - lastClickTime) < JUMP_DELAY) {
+                        // Si NO estaba volando pero doble salto rápido: activar vuelo
+                        player.capabilities.isFlying = true;
+                        player.sendPlayerAbilities();
+                        player.motionY = 0.5;
+                    } else if (isFlying) {
+                        // Si ya estaba volando: subir
+                        player.motionY = 0.5;
+                    }
+                    // Guardamos el estado y tiempo del salto actual
+                    wasFlyingLastClick = isFlying;
+                    lastClickTime = now;
                 }
             });
         }
@@ -414,5 +446,38 @@ public enum Action implements Consumer<Serializable> {
                 logger.info("Right click finished");
             });
         }
+    },
+    TOGGLE_SNEAKING {
+        @Override
+        public void accept(Serializable params) {
+            Logger logger = LogManager.getLogger("MCForgeCommander");
+            logger.info("Toggle sneaking started");
+
+            if (!(params instanceof Boolean)) return;
+
+            boolean shouldSneak = (Boolean) params;
+            Minecraft mc = Minecraft.getMinecraft();
+
+            if (mc.player == null) return;
+
+            mc.addScheduledTask(() -> {
+                try {
+                    // Obtén el campo "pressed" de KeyBinding
+                    java.lang.reflect.Field pressedField = net.minecraft.client.settings.KeyBinding.class.getDeclaredField("pressed");
+                    pressedField.setAccessible(true);
+
+                    // Cambia el valor al deseado para la tecla sneak
+                    pressedField.setBoolean(mc.gameSettings.keyBindSneak, shouldSneak);
+
+                    logger.info("Sneak pressed field set to: " + shouldSneak);
+                } catch (Exception e) {
+                    logger.error("Error setting sneak pressed field via reflection", e);
+                }
+            });
+
+            logger.info("Toggle sneaking finished, set to: " + shouldSneak);
+        }
     };
+
+
 }
