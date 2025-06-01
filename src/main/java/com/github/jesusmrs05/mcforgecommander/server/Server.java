@@ -2,12 +2,15 @@ package com.github.jesusmrs05.mcforgecommander.server;
 
 import com.github.jesusmrs05.mcforgecommander.Tags;
 import com.github.jesusmrs05.mcforgecommander.common.Command;
+import com.github.jesusmrs05.mcforgecommander.common.ServerPacket;
 import com.github.jesusmrs05.mcforgecommander.mod.Action;
 import com.github.jesusmrs05.mcforgecommander.mod.config.Config;
 import com.github.jesusmrs05.mcforgecommander.server.threads.ConsumerThread;
 import com.github.jesusmrs05.mcforgecommander.server.threads.ConverterThread;
 import com.github.jesusmrs05.mcforgecommander.server.threads.ProducerThread;
 import com.github.jesusmrs05.mcforgecommander.server.threads.StreamerThread;
+
+import net.minecraft.client.Minecraft;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -115,6 +118,16 @@ public class Server {
                     consumer.start();
                     converter.start();
                     streamer.start();
+
+                    Minecraft mc = Minecraft.getMinecraft();
+                    ServerPacket initialGUIStatusPacket;
+                    if (mc.currentScreen == null){
+                        initialGUIStatusPacket = new ServerPacket(ServerPacket.GUIStatus.NONE, ServerPacket.Type.GUI_STATUS);
+                    } else {
+                        initialGUIStatusPacket = new ServerPacket(ServerPacket.GUIStatus.OTHER, ServerPacket.Type.GUI_STATUS);
+                    }
+                    output.writeObject(initialGUIStatusPacket);
+                    output.flush();
                 } catch (StreamCorruptedException sce) {
                     LOGGER.error("Error starting the server: {}", sce.getMessage());
                     StringWriter sw = new StringWriter();

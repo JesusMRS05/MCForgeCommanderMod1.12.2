@@ -1,11 +1,14 @@
 package com.github.jesusmrs05.mcforgecommander.mod;
 
 import com.github.jesusmrs05.mcforgecommander.Tags;
+import com.github.jesusmrs05.mcforgecommander.common.ServerPacket;
 import com.github.jesusmrs05.mcforgecommander.mod.config.Config;
 import com.github.jesusmrs05.mcforgecommander.server.FrameData;
 import com.github.jesusmrs05.mcforgecommander.server.Server;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiScreen;
+import net.minecraftforge.client.event.GuiOpenEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
@@ -17,6 +20,7 @@ import org.lwjgl.opengl.GL11;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.util.List;
@@ -103,7 +107,30 @@ public class MCForgeCommander {
         }
     }
 
-    public static int getStartingFrameLimit(){
+    public static int getStartingFrameLimit() {
         return startingFrameLimit;
+    }
+
+    @SubscribeEvent
+    public void onGuiOpen(GuiOpenEvent event) {
+        GuiScreen gui = event.getGui();
+        if (server != null && server.getClientSocket() != null && server.getClientSocket().isConnected()) {
+            ObjectOutputStream output = server.getOutput();
+            try {
+                if (gui == null) {
+                    ServerPacket packet = new ServerPacket(ServerPacket.GUIStatus.NONE, ServerPacket.Type.GUI_STATUS);
+                    output.writeObject(packet);
+                    output.flush();
+                } else {
+                    ServerPacket packet = new ServerPacket(ServerPacket.GUIStatus.OTHER, ServerPacket.Type.GUI_STATUS);
+                    output.writeObject(packet);
+                    output.flush();
+                }
+            } catch (IOException e) {
+            }
+        }
+        // Ejemplo de trazas (puedes eliminarlo si no lo necesitas)
+        Logger.getLogger("MCForgeCommander")
+                .info("[GuiOpenEvent] Nueva GUI: " + (gui == null ? "null" : gui.getClass().getSimpleName()));
     }
 }
