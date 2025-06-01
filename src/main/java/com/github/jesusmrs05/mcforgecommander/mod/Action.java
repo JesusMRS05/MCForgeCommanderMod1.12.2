@@ -159,9 +159,10 @@ public enum Action implements Consumer<Serializable> {
             Logger logger = LogManager.getLogger("MCForgeCommander");
 
             if (params instanceof String) {
-                try {
-                    String message = (String) params;
-                    Minecraft mc = Minecraft.getMinecraft();
+                String message = (String) params;
+                Minecraft mc = Minecraft.getMinecraft();
+
+                mc.addScheduledTask(() -> {
                     EntityPlayerSP player = mc.player;
 
                     if (player != null) {
@@ -174,9 +175,9 @@ public enum Action implements Consumer<Serializable> {
                     } else {
                         logger.error("Player is null.");
                     }
-                } catch (ClassCastException cce) {
-                    logger.error("The parameter to send the message is not a string.");
-                }
+                });
+            } else {
+                logger.error("The parameter to send the message is not a string.");
             }
         }
     },
@@ -189,53 +190,57 @@ public enum Action implements Consumer<Serializable> {
             if (capture == null) return;
 
             Minecraft mc = Minecraft.getMinecraft();
-            EntityPlayerSP player = mc.player;
 
-            if (mc.currentScreen != null) {
-                int inputWidth = capture.getInputWidth();
-                int inputHeight = capture.getInputHeight();
+            mc.addScheduledTask(() -> {
+                EntityPlayerSP player = mc.player;
 
-                int screenWidth = mc.displayWidth;
-                int screenHeight = mc.displayHeight;
+                if (mc.currentScreen != null) {
+                    int inputWidth = capture.getInputWidth();
+                    int inputHeight = capture.getInputHeight();
 
-                if (inputWidth <= 0 || inputHeight <= 0) {
-                    LogManager.getLogger("MCForgeCommander").error("Resolución de entrada inválida");
-                    return;
+                    int screenWidth = mc.displayWidth;
+                    int screenHeight = mc.displayHeight;
+
+                    if (inputWidth <= 0 || inputHeight <= 0) {
+                        LogManager.getLogger("MCForgeCommander").error("Resolución de entrada inválida");
+                        return;
+                    }
+
+                    int scaledX = capture.getX() * screenWidth / inputWidth;
+                    int rawY = capture.getY() * screenHeight / inputHeight;
+                    int scaledY = screenHeight - rawY;
+
+                    Mouse.setCursorPosition(scaledX, scaledY);
+
+                    ScaledResolution scaled = new ScaledResolution(mc);
+                    int guiX = scaledX * scaled.getScaledWidth() / screenWidth;
+                    int guiY = rawY * scaled.getScaledHeight() / screenHeight;
+
+                    if (capture.isClick()) {
+                        mc.addScheduledTask(() -> {
+                            try {
+                                Method clickMethod = GuiScreen.class.getDeclaredMethod("mouseClicked", int.class, int.class, int.class);
+                                clickMethod.setAccessible(true);
+                                clickMethod.invoke(mc.currentScreen, guiX, guiY, 0);
+
+                                Method releaseMethod = GuiScreen.class.getDeclaredMethod("mouseReleased", int.class, int.class, int.class);
+                                releaseMethod.setAccessible(true);
+                                releaseMethod.invoke(mc.currentScreen, guiX, guiY, 0);
+                            } catch (Exception e) {
+                                LogManager.getLogger("MCForgeCommander").error("Error handling screen click", e);
+                            }
+                        });
+                    }
+                } else {
+                    if (player != null && capture.isMovement()) {
+                        player.rotationYaw += capture.getDeltaYaw();
+                        player.rotationPitch -= capture.getDeltaPitch();
+
+                        if (player.rotationPitch > 90.0F) player.rotationPitch = 90.0F;
+                        if (player.rotationPitch < -90.0F) player.rotationPitch = -90.0F;
+                    }
                 }
-
-                int scaledX = capture.getX() * screenWidth / inputWidth;
-                int rawY = capture.getY() * screenHeight / inputHeight;
-                int scaledY = screenHeight - rawY;
-
-                Mouse.setCursorPosition(scaledX, scaledY);
-
-                ScaledResolution scaled = new ScaledResolution(mc);
-                int guiX = scaledX * scaled.getScaledWidth() / screenWidth;
-                int guiY = rawY * scaled.getScaledHeight() / screenHeight;
-
-                if (capture.isClick()) {
-                    mc.addScheduledTask(() -> {
-                        try {
-                            Method clickMethod = GuiScreen.class.getDeclaredMethod("mouseClicked", int.class, int.class, int.class);
-                            clickMethod.setAccessible(true);
-                            clickMethod.invoke(mc.currentScreen, guiX, guiY, 0);
-
-                            Method releaseMethod = GuiScreen.class.getDeclaredMethod("mouseReleased", int.class, int.class, int.class);
-                            releaseMethod.setAccessible(true);
-                            releaseMethod.invoke(mc.currentScreen, guiX, guiY, 0);
-                        } catch (Exception e) {
-                        }
-                    });
-                }
-            } else {
-                if (player != null && capture.isMovement()) {
-                    player.rotationYaw += capture.getDeltaYaw();
-                    player.rotationPitch -= capture.getDeltaPitch();
-
-                    if (player.rotationPitch > 90.0F) player.rotationPitch = 90.0F;
-                    if (player.rotationPitch < -90.0F) player.rotationPitch = -90.0F;
-                }
-            }
+            });
         }
     },
     PRESS_CHAT_KEY {
@@ -243,11 +248,15 @@ public enum Action implements Consumer<Serializable> {
         public void accept(Serializable params) {
             if (params instanceof Boolean) {
                 boolean open = (Boolean) params;
-                if (open) {
-                    Minecraft.getMinecraft().displayGuiScreen(new GuiChat());
-                } else {
-                    Minecraft.getMinecraft().displayGuiScreen(null); // Cierra cualquier GUI
-                }
+                Minecraft mc = Minecraft.getMinecraft();
+
+                mc.addScheduledTask(() -> {
+                    if (open) {
+                        mc.displayGuiScreen(new GuiChat());
+                    } else {
+                        mc.displayGuiScreen(null); // Cierra cualquier GUI
+                    }
+                });
             }
         }
     },
@@ -257,39 +266,54 @@ public enum Action implements Consumer<Serializable> {
         public void accept(Serializable params) {
             if (params instanceof Boolean) {
                 boolean open = (Boolean) params;
-                if (open) {
-                    Minecraft.getMinecraft().displayGuiScreen(new GuiInventory(Minecraft.getMinecraft().player));
-                } else {
-                    Minecraft.getMinecraft().displayGuiScreen(null);
-                }
+                Minecraft mc = Minecraft.getMinecraft();
+
+                mc.addScheduledTask(() -> {
+                    if (open) {
+                        mc.displayGuiScreen(new GuiInventory(mc.player));
+                    } else {
+                        mc.displayGuiScreen(null);
+                    }
+                });
             }
         }
     },
+
     PRESS_MENU_KEY {
         @Override
         public void accept(Serializable params) {
-            Minecraft.getMinecraft().displayInGameMenu();
+            Minecraft mc = Minecraft.getMinecraft();
+            mc.addScheduledTask(mc::displayInGameMenu);
         }
     },
-    //Goes from 0 to 8
+
     PRESS_CERTAIN_HOTBAR_KEY {
         @Override
         public void accept(Serializable params) {
             if (params instanceof Integer) {
                 int hotbarSlot = (Integer) params;
-                Minecraft.getMinecraft().player.inventory.currentItem = hotbarSlot;
+                Minecraft mc = Minecraft.getMinecraft();
+
+                mc.addScheduledTask(() -> {
+                    if (mc.player != null) {
+                        mc.player.inventory.currentItem = hotbarSlot;
+                    }
+                });
             }
         }
     },
+
     PRESS_JUMP_KEY {
         @Override
         public void accept(Serializable params) {
             Minecraft mc = Minecraft.getMinecraft();
-            EntityPlayerSP player = mc.player;
 
-            if (player != null && player.onGround) {
-                player.jump();
-            }
+            mc.addScheduledTask(() -> {
+                EntityPlayerSP player = mc.player;
+                if (player != null && player.onGround) {
+                    player.jump();
+                }
+            });
         }
     },
     SET_FPS {
@@ -298,11 +322,15 @@ public enum Action implements Consumer<Serializable> {
             if (params instanceof Integer) {
                 int fps = (Integer) params;
                 MCForgeCommander.setFPS(fps);
-                Minecraft minecraft = Minecraft.getMinecraft();
-                minecraft.gameSettings.limitFramerate = fps;
+                Minecraft mc = Minecraft.getMinecraft();
+
+                mc.addScheduledTask(() -> {
+                    mc.gameSettings.limitFramerate = fps;
+                });
             }
         }
     },
+
     SET_JPEG_QUALITY {
         Logger logger = LogManager.getLogger("MCForgeCommander");
 
@@ -315,67 +343,76 @@ public enum Action implements Consumer<Serializable> {
             }
         }
     },
+
     LEFT_CLICK {
         @Override
         public void accept(Serializable params) {
             if (params instanceof Boolean) {
                 boolean isHolding = (Boolean) params;
                 Minecraft mc = Minecraft.getMinecraft();
-                EntityPlayerSP player = mc.player;
-                if (player == null) return;
 
-                RayTraceResult hit = mc.objectMouseOver;
-                if (hit == null) return;
+                mc.addScheduledTask(() -> {
+                    EntityPlayerSP player = mc.player;
+                    if (player == null) return;
 
-                switch (hit.typeOfHit) {
-                    case ENTITY:
-                        if (!isHolding) {
-                            mc.playerController.attackEntity(player, hit.entityHit);
+                    RayTraceResult hit = mc.objectMouseOver;
+                    if (hit == null) return;
+
+                    switch (hit.typeOfHit) {
+                        case ENTITY:
+                            if (!isHolding) {
+                                mc.playerController.attackEntity(player, hit.entityHit);
+                                player.swingArm(EnumHand.MAIN_HAND);
+                            }
+                            break;
+
+                        case BLOCK:
+                            int damageTicks = isHolding ? 1 : 4;
+                            for (int i = 0; i < damageTicks; i++) {
+                                BlockPos pos = hit.getBlockPos();
+                                EnumFacing side = hit.sideHit;
+                                mc.playerController.onPlayerDamageBlock(pos, side);
+                            }
                             player.swingArm(EnumHand.MAIN_HAND);
-                        }
-                        break;
+                            break;
 
-                    case BLOCK:
-                        int damageTicks = isHolding ? 1 : 4;
-                        for (int i = 0; i < damageTicks; i++) {
-                            BlockPos pos = hit.getBlockPos();
-                            EnumFacing side = hit.sideHit;
-                            mc.playerController.onPlayerDamageBlock(pos, side);
-                        }
-                        player.swingArm(EnumHand.MAIN_HAND);
-                        break;
-
-                    default:
-                        break;
-                }
+                        default:
+                            break;
+                    }
+                });
             }
         }
     },
+
     RIGHT_CLICK {
         @Override
         public void accept(Serializable params) {
             Logger logger = LogManager.getLogger("MCForgeCommander");
             logger.info("Right click started");
+
             Minecraft mc = Minecraft.getMinecraft();
-            RayTraceResult ray = mc.objectMouseOver;
 
-            if (ray != null && ray.typeOfHit == RayTraceResult.Type.BLOCK) {
-                BlockPos pos = ray.getBlockPos();
-                EnumFacing side = ray.sideHit;
-                Vec3d hitVec = ray.hitVec;
+            mc.addScheduledTask(() -> {
+                RayTraceResult ray = mc.objectMouseOver;
 
-                mc.playerController.processRightClickBlock(
-                        mc.player,
-                        mc.world,
-                        pos,
-                        side,
-                        hitVec,
-                        EnumHand.MAIN_HAND
-                );
-                mc.player.swingArm(EnumHand.MAIN_HAND); // animación opcional
-            }
+                if (ray != null && ray.typeOfHit == RayTraceResult.Type.BLOCK) {
+                    BlockPos pos = ray.getBlockPos();
+                    EnumFacing side = ray.sideHit;
+                    Vec3d hitVec = ray.hitVec;
 
-            logger.info("Right click finished");
+                    mc.playerController.processRightClickBlock(
+                            mc.player,
+                            mc.world,
+                            pos,
+                            side,
+                            hitVec,
+                            EnumHand.MAIN_HAND
+                    );
+                    mc.player.swingArm(EnumHand.MAIN_HAND); // animación opcional
+                }
+
+                logger.info("Right click finished");
+            });
         }
     };
 }
