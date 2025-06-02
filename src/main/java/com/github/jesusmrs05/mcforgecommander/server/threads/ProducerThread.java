@@ -14,7 +14,9 @@ public class ProducerThread extends Thread {
         try {
             while (!isInterrupted()) {
                 Command command = server.getCommand();
-                server.add(command);
+                if (command != null) {
+                    server.add(command);
+                }
             }
         } catch (InterruptedException ie){
             interrupt();

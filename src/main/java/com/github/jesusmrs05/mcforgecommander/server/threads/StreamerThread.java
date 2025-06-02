@@ -12,12 +12,17 @@ public class StreamerThread extends Thread {
         Server server = Server.getInstance();
         ObjectOutputStream output = server.getOutput();
 
+        int sent = 0;
+
         try {
             while (!isInterrupted()) {
                 byte[] imageBytes = server.takeImage();
                 synchronized (output) {
                     ServerPacket packet = new ServerPacket(imageBytes, ServerPacket.Type.IMAGE);
                     output.writeObject(packet);
+                    if(++sent % 240 == 0){
+                        output.reset();
+                    }
                     output.flush();
                 }
             }

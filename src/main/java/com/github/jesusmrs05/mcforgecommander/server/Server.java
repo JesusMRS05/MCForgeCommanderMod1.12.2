@@ -27,6 +27,7 @@ import java.io.StringWriter;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -63,14 +64,15 @@ public class Server {
             @Override
             public void run() {
                 try {
+                    Thread.sleep(3000);
                     isOn = true;
-                    producer  = new ProducerThread();
+                    producer = new ProducerThread();
                     producer.setName("ProducerThread");
-                    consumer  = new ConsumerThread();
+                    consumer = new ConsumerThread();
                     consumer.setName("ConsumerThread");
                     converter = new ConverterThread();
                     converter.setName("ConverterThread");
-                    streamer  = new StreamerThread();
+                    streamer = new StreamerThread();
                     streamer.setName("StreamerThread");
 
                     serverSocket = new ServerSocket();
@@ -92,7 +94,7 @@ public class Server {
                     LOGGER.info("Going to read");
                     String password = input.readUTF();
 
-                    while (!password.equals(Config.key)) {
+                    while (!safeEquals(Config.key, password)) {
                         LOGGER.info("Incorrect Password");
                         output.writeObject("Incorrect Password");
                         output.flush();
@@ -106,10 +108,21 @@ public class Server {
                         password = input.readUTF();
                     }
 
-                    LOGGER.info("Sending Response");
-                    output.writeUTF("Welcome");
-                    output.flush();
-                    LOGGER.info("Response Sent");
+                    synchronized (output) {
+                        LOGGER.info("Sending Response");
+                        output.writeUTF("Welcome");
+                        output.flush();
+                        LOGGER.info("Response Sent");
+                        Minecraft mc = Minecraft.getMinecraft();
+                        ServerPacket initialGUIStatusPacket;
+                        if (mc.currentScreen == null) {
+                            initialGUIStatusPacket = new ServerPacket(ServerPacket.GUIStatus.NONE, ServerPacket.Type.GUI_STATUS);
+                        } else {
+                            initialGUIStatusPacket = new ServerPacket(ServerPacket.GUIStatus.OTHER, ServerPacket.Type.GUI_STATUS);
+                        }
+                        output.writeObject(initialGUIStatusPacket);
+                        output.flush();
+                    }
 
                     Action.SET_FPS.accept(input.readInt());
                     Action.SET_JPEG_QUALITY.accept(input.readFloat());
@@ -118,16 +131,17 @@ public class Server {
                     consumer.start();
                     converter.start();
                     streamer.start();
-
-                    Minecraft mc = Minecraft.getMinecraft();
-                    ServerPacket initialGUIStatusPacket;
-                    if (mc.currentScreen == null){
-                        initialGUIStatusPacket = new ServerPacket(ServerPacket.GUIStatus.NONE, ServerPacket.Type.GUI_STATUS);
-                    } else {
-                        initialGUIStatusPacket = new ServerPacket(ServerPacket.GUIStatus.OTHER, ServerPacket.Type.GUI_STATUS);
+                } catch (SocketException se) {
+                    LOGGER.error("Error starting the server: {}", se.getMessage());
+                    StringWriter sw = new StringWriter();
+                    PrintWriter pw = new PrintWriter(sw);
+                    se.printStackTrace(pw);
+                    String stackTrace = sw.toString();
+                    try {
+                        Thread.sleep(10000);
+                    } catch (InterruptedException e) {
                     }
-                    output.writeObject(initialGUIStatusPacket);
-                    output.flush();
+                    server.close(Config.enableServer);
                 } catch (StreamCorruptedException sce) {
                     LOGGER.error("Error starting the server: {}", sce.getMessage());
                     StringWriter sw = new StringWriter();
@@ -135,14 +149,15 @@ public class Server {
                     sce.printStackTrace(pw);
                     String stackTrace = sw.toString();
                     server.close(Config.enableServer);
-                }catch (IOException e) {
+                } catch (IOException e) {
                     LOGGER.error("Error starting the server: {}", e.getMessage());
                     StringWriter sw = new StringWriter();
                     PrintWriter pw = new PrintWriter(sw);
                     e.printStackTrace(pw);
                     String stackTrace = sw.toString();
                     LOGGER.error(stackTrace);
-                } catch (Exception e){
+                    server.close(Config.enableServer);
+                } catch (Exception e) {
                     LOGGER.error("Error starting the server: {}", e.getMessage());
                     StringWriter sw = new StringWriter();
                     PrintWriter pw = new PrintWriter(sw);
@@ -168,20 +183,37 @@ public class Server {
 
     public void close(boolean restart) {
         isOn = false;
+        if (producer != null) producer.interrupt();
+        if (consumer != null) consumer.interrupt();
+        if (converter != null) converter.interrupt();
+        if (streamer != null) streamer.interrupt();
+        commands.clear();
+        imageQueue.clear();
+        frameDataQueue.clear();
         try {
-            producer.interrupt();
-            consumer.interrupt();
-            converter.interrupt();
-            streamer.interrupt();
-            commands.clear();
-            imageQueue.clear();
-            frameDataQueue.clear();
-            output.close();
-            input.close();
-            clientSocket.close();
-            serverSocket.close();
-        } catch (IOException e) {
-            LOGGER.error("Error closing the server: {}", e.getMessage());
+            if (output != null) output.reset();
+        } catch (IOException ioe) {
+            LOGGER.error("Error closing the server: {}", ioe.getMessage());
+        }
+        try {
+            if (output != null) output.close();
+        } catch (IOException ioe) {
+            LOGGER.error("Error closing the server: {}", ioe.getMessage());
+        }
+        try {
+            if (input != null) input.close();
+        } catch (IOException ioe) {
+            LOGGER.error("Error closing the server: {}", ioe.getMessage());
+        }
+        try {
+            if (clientSocket != null) clientSocket.close();
+        } catch (IOException ioe) {
+            LOGGER.error("Error closing the server: {}", ioe.getMessage());
+        }
+        try {
+            if (serverSocket != null) serverSocket.close();
+        } catch (IOException ioe) {
+            LOGGER.error("Error closing the server: {}", ioe.getMessage());
         }
         if (restart) {
             startServer(Integer.parseInt(Config.port));
@@ -236,5 +268,24 @@ public class Server {
 
     public boolean isOn() {
         return isOn;
+    }
+
+    public static boolean safeEquals(String a, String b) {
+        if (a == null || b == null) {
+            return false;
+        }
+
+        int lenA = a.length();
+        int lenB = b.length();
+        int diff  = lenA ^ lenB;
+
+        // Recorremos SIEMPRE toda la primera cadena
+        for (int i = 0; i < lenA; i++) {
+            char ca = a.charAt(i);
+            char cb = (i < lenB) ? b.charAt(i) : 0;
+            diff |= ca ^ cb;
+        }
+
+        return diff == 0;
     }
 }

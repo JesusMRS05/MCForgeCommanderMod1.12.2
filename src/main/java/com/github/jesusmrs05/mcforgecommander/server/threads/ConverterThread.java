@@ -26,6 +26,7 @@ public class ConverterThread extends Thread {
         try {
             while (!isInterrupted()) {
                 FrameData frameData = server.takeFrameData();
+                if (frameData == null || frameData.buffer == null) continue;
                 BufferedImage image = convertToImage(frameData.buffer, frameData.width, frameData.height);
                 BufferedImage scaledImage = scaleImage(image);
 

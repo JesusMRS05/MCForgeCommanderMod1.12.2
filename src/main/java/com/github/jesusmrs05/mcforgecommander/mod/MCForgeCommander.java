@@ -123,14 +123,13 @@ public class MCForgeCommander {
                     output.flush();
                 } else {
                     ServerPacket packet = new ServerPacket(ServerPacket.GUIStatus.OTHER, ServerPacket.Type.GUI_STATUS);
-                    output.writeObject(packet);
-                    output.flush();
+                    synchronized (output) {
+                        output.writeObject(packet);
+                        output.flush();
+                    }
                 }
             } catch (IOException e) {
             }
         }
-        // Ejemplo de trazas (puedes eliminarlo si no lo necesitas)
-        Logger.getLogger("MCForgeCommander")
-                .info("[GuiOpenEvent] Nueva GUI: " + (gui == null ? "null" : gui.getClass().getSimpleName()));
     }
 }
